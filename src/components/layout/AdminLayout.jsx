@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaBell, FaUser, FaSearch, FaCaretDown } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import bgImg from '../../assets/bg.jpg';
  
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -15,105 +17,198 @@ const adminLinks = [
  
 function AdminLayout({ children }) {
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [notifications] = useState([
+    { id: 1, message: 'New order received', time: '2 min ago', type: 'order' },
+    { id: 2, message: 'Low stock alert for Chicken', time: '5 min ago', type: 'stock' },
+    { id: 3, message: 'Payment received', time: '10 min ago', type: 'payment' }
+  ]);
+  
+  const handleLogout = () => {
+    logout();
+  };
   
   return (
-    <div className="page-container flex flex-col bg-gray-100">
-      {/* Mobile Menu Button */}
-      <button 
-        className="fixed top-4 right-4 z-50 lg:hidden responsive-btn bg-white shadow-lg rounded-lg touch-target"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        ☰
-      </button>
-      
-      {/* Top Navigation Bar */}
-      <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Admin Title */}
-            <div className="flex items-center">
-              <h1 className="responsive-text-xl sm:responsive-text-2xl font-bold text-green-700">
-                🏪 Taaza Admin
-              </h1>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-1">
-              {adminLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg responsive-text-sm font-medium transition-colors touch-target ${
-                    location.pathname.startsWith(link.to) 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-                  }`}
-                  title={link.label}
-                >
-                  <span className="responsive-text-base">{link.icon}</span> 
-                  {link.label}
-                </Link>
-              ))}
-              
-              {/* Logout Button */}
-              <Link 
-                to="/login" 
-                className="flex items-center gap-2 px-3 py-2 rounded-lg responsive-text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors touch-target ml-2"
-              >
-                <FaSignOutAlt /> Logout
-              </Link>
-            </div>
-          </div>
-        </div>
-        
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-200">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {adminLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg responsive-text-base font-medium transition-colors touch-target ${
-                    location.pathname.startsWith(link.to) 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'text-gray-700 hover:bg-green-50'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="responsive-text-lg">{link.icon}</span> 
-                  {link.label}
-                </Link>
-              ))}
-              
-              {/* Mobile Logout */}
-              <Link 
-                to="/login" 
-                className="flex items-center gap-3 px-3 py-2 rounded-lg responsive-text-base font-medium text-red-600 hover:bg-red-50 transition-colors touch-target"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FaSignOutAlt /> Logout
-              </Link>
-            </div>
-          </div>
-        )}
-      </nav>
-      
-      {/* Mobile Overlay */}
-      {mobileMenuOpen && (
+    <div className="min-h-screen flex bg-white">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
       
-      {/* Main Content */}
-      <main className="flex-1 responsive-p-4 sm:responsive-p-6 lg:responsive-p-8 overflow-y-auto overflow-x-hidden">
+      {/* Left Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between h-20 px-6 border-b border-slate-200 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 shadow-lg">
+          <h1 className="text-xl font-bold text-white flex items-center gap-3">
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              🏪
+            </div>
+            <span className="font-extrabold tracking-wide">Taaza Admin</span>
+          </h1>
+          <button 
+            className="lg:hidden text-white hover:text-slate-200 transition-colors"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+        
+        {/* Sidebar Navigation */}
+        <nav className="mt-6 px-4">
+          <div className="space-y-2">
+          {adminLinks.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+                className={`flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-medium transition-all duration-300 group ${
+                  location.pathname.startsWith(link.to) 
+                    ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-lg scale-105 border-l-4 border-white' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-l-4 hover:border-slate-400 hover:scale-105'
+                }`}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <span className={`text-lg transition-colors ${
+                  location.pathname.startsWith(link.to) 
+                    ? 'text-white' 
+                    : 'text-slate-500 group-hover:text-slate-700'
+                }`}>
+                  {link.icon}
+                </span>
+                <span className="font-semibold">{link.label}</span>
+            </Link>
+          ))}
+          </div>
+          
+          {/* Logout Section */}
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-300 group hover:scale-105"
+            >
+              <span className="text-lg text-red-500 group-hover:text-red-600">
+                <FaSignOutAlt />
+              </span>
+              <span className="font-semibold">Logout</span>
+            </button>
+          </div>
+        </nav>
+        
+        {/* Sidebar Footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-slate-50/80 backdrop-blur-sm">
+          <div className="text-xs text-slate-500 text-center font-medium">
+            Admin Panel v1.0
+          </div>
+        </div>
+      </div>
+      
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Professional Top Header Bar */}
+        <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between h-16 px-6">
+            {/* Left Section - Mobile Menu & Search */}
+            <div className="flex items-center gap-4">
+              <button 
+                className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <FaBars size={20} />
+              </button>
+              
+              {/* Search Bar */}
+              <div className="hidden md:flex items-center bg-slate-100 rounded-lg px-4 py-2 w-80">
+                <FaSearch className="text-slate-400 mr-3" size={14} />
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="bg-transparent border-none outline-none text-slate-700 placeholder-slate-400 w-full"
+                />
+              </div>
+            </div>
+            
+            {/* Center Section - Page Title */}
+            <div className="hidden lg:flex items-center">
+              <h1 className="text-lg font-bold text-slate-900">
+                Taaza Management System
+              </h1>
+            </div>
+            
+            {/* Right Section - Notifications & User */}
+            <div className="flex items-center gap-4">
+              {/* Notifications */}
+              <div className="relative">
+                <button className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors relative">
+                  <FaBell size={18} />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              {/* User Menu */}
+              <div className="relative">
+                <button 
+                  className="flex items-center gap-3 p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    <FaUser size={14} />
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <div className="text-sm font-semibold text-slate-900">{user?.name || 'Admin'}</div>
+                    <div className="text-xs text-slate-500">Administrator</div>
+                  </div>
+                  <FaCaretDown size={12} className="text-slate-400" />
+                </button>
+                
+                {/* User Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-slate-100">
+                      <div className="text-sm font-semibold text-slate-900">{user?.name || 'Admin'}</div>
+                      <div className="text-xs text-slate-500">{user?.mobile || 'admin@taaza.com'}</div>
+                    </div>
+                    <Link 
+                      to="/admin/settings" 
+                      className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Settings
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setShowUserMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="responsive-p-4 sm:responsive-p-6 lg:responsive-p-8">
         {children || <Outlet />}
+          </div>
       </main>
+      </div>
     </div>
   );
 }
-
+ 
 export default AdminLayout;

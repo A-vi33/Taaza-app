@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { db, storage } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 function Cart(props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const RAZORPAY_KEY_ID = 'rzp_test_Ty2fPZgb35aMIa';
 
@@ -25,12 +26,41 @@ function Cart(props) {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const productsCollection = collection(db, 'products');
+      const productsSnapshot = await getDocs(productsCollection);
+      const productsData = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(productsData);
+    };
+
+    fetchProducts();
+  }, []);
+
   const updateQuantity = (id, weight, quantity) => {
-    const updated = cartItems.map(item =>
-      item.id === id && item.weight === weight ? { ...item, quantity } : item
-    ).filter(item => item.quantity > 0);
-    setCartItems(updated);
-    localStorage.setItem('taazaCart', JSON.stringify(updated));
+    if (quantity <= 0) {
+      removeItem(id, weight);
+      return;
+    }
+    
+    // Check if requested quantity exceeds available stock
+    const item = cartItems.find(item => item.id === id && item.weight === weight);
+    if (item) {
+      const weightInKg = (weight * quantity) / 1000;
+      const product = products.find(p => p.id === id);
+      if (product && weightInKg > (product.quantity || 0)) {
+        alert(`Insufficient stock! Only ${product.quantity || 0} kg available.`);
+        return;
+      }
+    }
+    
+    const updatedCart = cartItems.map(item => 
+      item.id === id && item.weight === weight 
+        ? { ...item, quantity } 
+        : item
+    );
+    setCartItems(updatedCart);
+    localStorage.setItem('taazaCart', JSON.stringify(updatedCart));
   };
 
   const removeItem = (id, weight) => {
@@ -59,34 +89,49 @@ function Cart(props) {
     });
   };
 
+  const sendSMS = async (phone, message) => {
+    // For now, we'll just log the SMS. In production, integrate with SMS service like Twilio
+    console.log(`SMS to ${phone}: ${message}`);
+    // You can integrate with Twilio, AWS SNS, or any SMS service here
+  };
+
   const handleCheckout = async () => {
-    if (!user?.name || !user?.phone) {
-      alert('Please complete your profile with name and phone number.');
+    if (!user) {
+      alert('Please login to checkout');
       return;
     }
+
     try {
-      // Create order in Firestore with pending status
-      const orderRef = await addDoc(collection(db, 'orders'), {
-        cart: cartItems,
-        user: { name: user?.name, phone: user?.phone, email: user?.email },
-        paymentId: '',
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        fulfilled: false
-      });
+      const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
       // Load Razorpay script
       const res = await loadRazorpayScript();
       if (!res) {
         alert('Razorpay SDK failed to load.');
         return;
       }
-      const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      // Create a unique order ID for Razorpay (since we can't deploy backend)
+      const razorpayOrderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      
+      // Store order in Firestore first
+      const orderRef = await addDoc(collection(db, 'orders'), {
+        cart: cartItems,
+        user: { name: user?.name, phone: user?.phone, email: user?.email },
+        paymentId: '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        fulfilled: false,
+        razorpayOrderId: razorpayOrderId
+      });
+      
       const options = {
         key: RAZORPAY_KEY_ID,
         amount: total * 100, // in paise
         currency: 'INR',
         name: 'Taaza Chicken',
         description: 'Order Payment',
+        order_id: razorpayOrderId, // Use the generated Razorpay order ID
         handler: async function (response) {
           const paymentId = response.razorpay_payment_id;
           // Save transaction
@@ -164,6 +209,13 @@ function Cart(props) {
               await updateDoc(productRef, { quantity: newQty });
             }
           }
+          
+          // Send SMS receipt to customer
+          if (user?.phone) {
+            const smsMessage = `Thank you for your order! Order ID: ${orderRef.id}, Amount: ₹${total}, Items: ${cartItems.map(item => `${item.name} (${item.weight}g)`).join(', ')}. Payment ID: ${paymentId}`;
+            await sendSMS(user.phone, smsMessage);
+          }
+          
           // Clear cart and redirect
           setCartItems([]);
           localStorage.removeItem('taazaCart');
@@ -220,6 +272,9 @@ function Cart(props) {
               <div className="flex-1 min-w-0">
                 <h3 className="responsive-text-lg font-bold text-gray-900 mb-2">{item.name}</h3>
                 <p className="responsive-text-sm text-gray-500 mb-2">{item.weight}g</p>
+                <p className="responsive-text-sm text-blue-600 mb-2">
+                  📦 Available: {products.find(p => p.id === item.id)?.quantity || 0} kg
+                </p>
                 <p className="responsive-text-base mb-3">
                   ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-600">₹{item.price * item.quantity}</span>
                 </p>

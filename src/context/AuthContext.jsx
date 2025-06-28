@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -10,59 +9,50 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { type: 'customer' | 'admin', ... }
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check for stored user data on app load
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        if (firebaseUser.email === 'admin@taaza.com') {
-          setUser({ type: 'admin', email: firebaseUser.email });
-        } else {
-          // Temporarily skip Firestore access to avoid permission errors
-          // TODO: Update Firestore rules to allow read/write access
-          setUser({ 
-            type: 'customer', 
-            email: firebaseUser.email, 
-            uid: firebaseUser.uid,
-            name: 'Customer', // Fallback name
-            phone: '' // Fallback phone
-          });
-          
-          /* Original code (commented out until rules are fixed):
-          try {
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-            if (userDoc.exists()) {
-              setUser({ ...userDoc.data(), type: 'customer' });
-            } else {
-              setUser({ type: 'customer', email: firebaseUser.email, uid: firebaseUser.uid });
-            }
-          } catch (err) {
-            setUser({ type: 'customer', email: firebaseUser.email, uid: firebaseUser.uid });
-          }
-          */
-        }
-      } else {
-        setUser(null);
+    const storedUser = localStorage.getItem('taaza_user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('taaza_user');
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    }
+    setLoading(false);
   }, []);
 
-  const logout = async () => {
-    try {
-      const auth = getAuth();
-      await signOut(auth);
-      setUser(null);
-      // Clear any stored cart data
-      localStorage.removeItem('taazaCart');
-    } catch (error) {
-      console.error('Error logging out:', error);
+  // Function to update user data
+  const updateUser = (userData) => {
+    setUser(userData);
+    if (userData) {
+      localStorage.setItem('taaza_user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('taaza_user');
     }
   };
 
-  const value = { user, setUser, loading, logout };
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  // Logout function
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('taaza_user');
+  };
+
+  const value = {
+    user,
+    setUser: updateUser,
+    logout,
+    loading
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 } 

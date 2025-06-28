@@ -7,9 +7,8 @@ import AdminDashboard from '../pages/admin/AdminDashboard'
 import AdminTransaction from '../pages/admin/AdminTransaction'
 import AdminProducts from '../pages/admin/AdminProducts'
 import AdminEmployees from '../pages/admin/AdminEmployees'
-import CustomerRegister from '../pages/user/CustomerRegister'
 import OrderConfirmation from '../pages/user/OrderConfirmation'
-import CommonLogin from '../pages/user/CommonLogin'
+import SimpleLogin from '../pages/user/SimpleLogin'
 import AdminLayout from '../layout/AdminLayout'
 import AdminOrders from '../pages/admin/AdminOrders'
 import AdminDelivery from '../pages/admin/AdminDelivery'
@@ -23,8 +22,7 @@ function Routers() {
       <Route path='/' element={<Home/>}/>
       <Route path='/cart' element={<Cart/>}/>
       <Route path='/orders' element={<Orders/>}/>
-      <Route path='/login' element={<CommonLogin/>}/>
-      <Route path='/register' element={<CustomerRegister/>}/>
+      <Route path='/login' element={<SimpleLogin/>}/>
       <Route path='/order-confirmation' element={<OrderConfirmation/>}/>
       <Route path='/admin' element={<AdminLayout />}>
         <Route path='dashboard' element={<AdminDashboard />} />

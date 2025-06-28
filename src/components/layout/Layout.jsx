@@ -8,7 +8,7 @@ function Layout() {
   function HideHeaderFooterWrapper({ children }) {
     const location = useLocation();
     const hideHeaderFooter = [
-      '/login', '/register', '/admin/register'
+      '/login'
     ].some(path => location.pathname.startsWith(path));
     return (
       <div className="page-container">

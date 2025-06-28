@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { FaHome, FaClipboardList, FaShoppingCart, FaUser, FaSignOutAlt, FaBars, FaTimes, FaUserCog } from 'react-icons/fa'
 
 function Header() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [cartItemCount, setCartItemCount] = useState(0)
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   useEffect(() => {
       const savedCart = localStorage.getItem('taazaCart')
@@ -18,6 +20,7 @@ function Header() {
 
   const handleLogout = () => {
     logout()
+    setShowUserMenu(false)
   }
 
   const toggleMobileMenu = () => {
@@ -28,384 +31,211 @@ function Header() {
     setIsMobileMenuOpen(false)
   }
 
-  // --- Styles ---
-  const headerStyle = {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '1rem',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    width: '100%'
-  }
-  const containerStyle = {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap'
-  }
-  const logoStyle = {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: 'white',
-    textDecoration: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  }
-  const desktopNavStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    listStyle: 'none',
-    margin: 0,
-    padding: 0
-  }
-  const mobileMenuButtonStyle = {
-    display: 'none',
-    background: 'none',
-    border: 'none',
-    color: 'white',
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    borderRadius: '0.25rem',
-    transition: 'background-color 0.2s'
-  }
-  const mobileNavStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.95)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
-    transition: 'transform 0.3s ease',
-    padding: '2rem'
-  }
-  const mobileNavListStyle = {
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2rem',
-    alignItems: 'center'
-  }
-  const mobileCloseButtonStyle = {
-    position: 'absolute',
-    top: '1rem',
-    right: '1rem',
-    background: 'none',
-    border: 'none',
-    color: 'white',
-    fontSize: '2rem',
-    cursor: 'pointer',
-    padding: '0.5rem'
-  }
-  const navLinkStyle = {
-    color: '#2c3e50',
-    textDecoration: 'none',
-    padding: '0.4rem 1.1rem',
-    borderRadius: '20px',
-    transition: 'background 0.2s, color 0.2s',
-    fontWeight: 500,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  }
-  const navLinkActive = { ...navLinkStyle, background: '#f8f9fa', color: '#e74c3c' }
-  const mobileNavLinkStyle = {
-    color: 'white',
-    textDecoration: 'none',
-    fontSize: '1.25rem',
-    fontWeight: '500',
-    padding: '1rem 2rem',
-    borderRadius: '0.5rem',
-    transition: 'background-color 0.2s',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    minWidth: '200px',
-    justifyContent: 'center'
-  }
-  const cartBtnStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    cursor: 'pointer',
-    background: '#f8f9fa',
-    border: '1px solid #ececec',
-    borderRadius: '24px',
-    padding: '0.5rem 1.2rem',
-    fontWeight: 600,
-    fontSize: '1.05rem',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-    position: 'relative',
-    transition: 'all 0.2s',
-    textDecoration: 'none',
-    color: '#2c3e50'
-  }
-  const cartCountStyle = {
-    background: '#e74c3c',
-    color: 'white',
-    borderRadius: '50%',
-    minWidth: '22px',
-    height: '22px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '13px',
-    fontWeight: 700,
-    marginLeft: '2px',
-    boxShadow: '0 2px 4px rgba(231,76,60,0.18)'
-  }
-  const userBtnStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    background: '#f8f9fa',
-    border: '1px solid #ececec',
-    borderRadius: '20px',
-    padding: '0.4rem 1rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-    color: '#2c3e50',
-    fontSize: '1rem',
-    transition: 'all 0.2s',
-    textDecoration: 'none'
-  }
-  const adminBtnStyle = { ...userBtnStyle, background: '#e74c3c', color: 'white', border: '1px solid #e74c3c' }
-
-  // Responsive styles
-  const responsiveStyles = {
-    '@media (max-width: 768px)': {
-      '.desktop-nav': { display: 'none' },
-      '.mobile-menu-button': { display: 'block' },
-      '.logo-text': { fontSize: '1.25rem' },
-    },
-    '@media (min-width: 769px)': {
-      '.mobile-nav': { display: 'none' },
-      '.mobile-menu-button': { display: 'none' },
-    },
-    '@media (max-width: 480px)': {
-      '.logo-text': { fontSize: '1rem' },
-      '.header-container': { padding: '0.75rem' },
-    },
-    '.mobile-nav-link:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
-    '.nav-link:hover': { backgroundColor: '#f8f9fa', color: '#e74c3c' },
-    '.cart-btn:hover': { transform: 'translateY(-1px)', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' },
-    '.user-btn:hover': { backgroundColor: '#e9ecef' },
-    '.admin-btn:hover': { backgroundColor: '#c0392b' },
-  }
-
   return (
-    <>
-      <style>
-        {`
-          ${Object.entries(responsiveStyles).map(([media, styles]) => `@media (${media}) { ${styles} }`).join(' ')}
-        `}
-      </style>
-
-    <header style={headerStyle}>
-        <div style={containerStyle} className="header-container">
-      <Link to="/" style={logoStyle}>
-            <span className="logo-text">🍗 Taaza</span>
-      </Link>
+    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          
+      {/* Logo */}
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-xl transition-all duration-300">
+              🍗
+            </div>
+            <span className="text-xl font-bold text-slate-800 group-hover:text-slate-600 transition-colors">
+              Taaza
+            </span>
+          </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav" style={desktopNavStyle}>
+          <nav className="hidden md:flex items-center space-x-1">
             {user?.type === 'customer' && (
               <>
                 <Link 
                   to="/" 
-                  style={location.pathname === '/' ? navLinkActive : navLinkStyle}
-                  className="nav-link"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === '/' 
+                      ? 'bg-slate-100 text-slate-800 shadow-sm' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                  }`}
                 >
-                  🏠 Home
+                  <FaHome size={16} />
+                  <span>Home</span>
                 </Link>
+                
                 <Link 
                   to="/orders" 
-                  style={location.pathname === '/orders' ? navLinkActive : navLinkStyle}
-                  className="nav-link"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === '/orders' 
+                      ? 'bg-slate-100 text-slate-800 shadow-sm' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                  }`}
                 >
-                  📋 Orders
-                </Link>
+                  <FaClipboardList size={16} />
+                  <span>Orders</span>
+      </Link>
+
                 <Link 
                   to="/cart" 
-                  style={cartBtnStyle}
-                  className="cart-btn"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all duration-200 relative"
                 >
-                  🛒 Cart
+                  <FaShoppingCart size={16} />
+                  <span>Cart</span>
                   {cartItemCount > 0 && (
-                    <span style={cartCountStyle}>{cartItemCount}</span>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {cartItemCount}
+                    </span>
                   )}
                 </Link>
               </>
             )}
             
-            {user?.type === 'admin' && (
+            {user?.type === 'admin' && !location.pathname.startsWith('/admin') && (
               <Link 
                 to="/admin/dashboard" 
-                style={adminBtnStyle}
-                className="admin-btn"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white hover:bg-slate-700 transition-all duration-200 shadow-sm"
               >
-                👨‍💼 Admin Panel
-              </Link>
-            )}
-
-            {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={userBtnStyle} className="user-btn">
-                  👤 {user.name || user.email}
-                </span>
-                <button 
-                  onClick={handleLogout}
-                  style={{
-                    ...userBtnStyle,
-                    background: '#dc3545',
-                    color: 'white',
-                    border: '1px solid #dc3545'
-                  }}
-                  className="user-btn"
-                >
-                  🚪 Logout
-                </button>
-              </div>
-            ) : (
-              <Link 
-                to="/login" 
-                style={userBtnStyle}
-                className="user-btn"
-              >
-                🔐 Login
+                <FaUserCog size={16} />
+                <span>Admin Panel</span>
               </Link>
             )}
       </nav>
 
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={toggleMobileMenu}
-            style={mobileMenuButtonStyle}
-            className="mobile-menu-button"
-            aria-label="Toggle mobile menu"
-          >
-            ☰
-          </button>
+          {/* User Section */}
+          <div className="flex items-center space-x-3">
+            {user ? (
+              <div className="relative">
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all duration-200"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    <FaUser size={12} />
+                  </div>
+                  <span className="hidden sm:block">{user.name || 'User'}</span>
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* User Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-slate-100">
+                      <div className="text-sm font-semibold text-slate-900">{user.name || 'User'}</div>
+                      <div className="text-xs text-slate-500">{user.mobile || 'user@taaza.com'}</div>
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <FaSignOutAlt size={14} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
         </div>
+            ) : (
+              <Link 
+                to="/login" 
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white hover:bg-slate-700 transition-all duration-200 shadow-sm"
+              >
+                <FaUser size={14} />
+                <span>Login</span>
+              </Link>
+            )}
 
-        {/* Mobile Navigation */}
-        <nav style={mobileNavStyle} className="mobile-nav">
-          <button 
-            onClick={closeMobileMenu}
-            style={mobileCloseButtonStyle}
-            aria-label="Close mobile menu"
-          >
-            ✕
-          </button>
-          
-          <ul style={mobileNavListStyle}>
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={toggleMobileMenu}
+              className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              aria-label="Toggle mobile menu"
+            >
+              <FaBars size={20} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-slate-200">
             {user?.type === 'customer' && (
               <>
-                <li>
-                  <Link 
-                    to="/" 
-                    style={mobileNavLinkStyle}
-                    className="mobile-nav-link"
-                    onClick={closeMobileMenu}
-                  >
-                    🏠 Home
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/orders" 
-                    style={mobileNavLinkStyle}
-                    className="mobile-nav-link"
-                    onClick={closeMobileMenu}
-                  >
-                    📋 Orders
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/cart" 
-                    style={mobileNavLinkStyle}
-                    className="mobile-nav-link"
-                    onClick={closeMobileMenu}
-                  >
-                    🛒 Cart
-                    {cartItemCount > 0 && (
-                      <span style={cartCountStyle}>{cartItemCount}</span>
-                    )}
-                  </Link>
-                </li>
+                <Link 
+                  to="/" 
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium transition-colors ${
+                    location.pathname === '/' 
+                      ? 'bg-slate-100 text-slate-800' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                  }`}
+                  onClick={closeMobileMenu}
+                >
+                  <FaHome size={18} />
+                  <span>Home</span>
+                </Link>
+                
+                <Link 
+                  to="/orders" 
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium transition-colors ${
+                    location.pathname === '/orders' 
+                      ? 'bg-slate-100 text-slate-800' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                  }`}
+                  onClick={closeMobileMenu}
+                >
+                  <FaClipboardList size={18} />
+                  <span>Orders</span>
+                </Link>
+                
+                <Link 
+                  to="/cart" 
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors relative"
+                  onClick={closeMobileMenu}
+                >
+                  <FaShoppingCart size={18} />
+                  <span>Cart</span>
+                  {cartItemCount > 0 && (
+                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Link>
               </>
             )}
             
-            {user?.type === 'admin' && (
-              <li>
-                <Link 
-                  to="/admin/dashboard" 
-                  style={mobileNavLinkStyle}
-                  className="mobile-nav-link"
-                  onClick={closeMobileMenu}
-                >
-                  👨‍💼 Admin Panel
-                </Link>
-              </li>
-            )}
-
-        {user ? (
-          <>
-                <li>
-                  <span style={mobileNavLinkStyle} className="mobile-nav-link">
-                    👤 {user.name || user.email}
-                  </span>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => {
-                      handleLogout()
-                      closeMobileMenu()
-                    }}
-                    style={{
-                      ...mobileNavLinkStyle,
-                      background: '#dc3545',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                    className="mobile-nav-link"
-                  >
-                    🚪 Logout
-            </button>
-                </li>
-          </>
-        ) : (
-              <li>
-                <Link 
-                  to="/login" 
-                  style={mobileNavLinkStyle}
-                  className="mobile-nav-link"
-                  onClick={closeMobileMenu}
-                >
-                  🔐 Login
+            {user?.type === 'admin' && !location.pathname.startsWith('/admin') && (
+              <Link 
+                to="/admin/dashboard" 
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium bg-slate-800 text-white hover:bg-slate-700 transition-colors"
+                onClick={closeMobileMenu}
+              >
+                <FaUserCog size={18} />
+                <span>Admin Panel</span>
           </Link>
-              </li>
         )}
-          </ul>
-        </nav>
+
+            {user && (
+              <div className="pt-4 border-t border-slate-200">
+                <div className="px-3 py-2 text-sm text-slate-500">
+                  Signed in as: {user.name || 'User'}
+                </div>
+                <button 
+                  onClick={() => {
+                    handleLogout()
+                    closeMobileMenu()
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <FaSignOutAlt size={18} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+      </div>
+      )}
     </header>
-    </>
   )
 }
 

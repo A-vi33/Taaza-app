@@ -9,9 +9,9 @@ function Header() {
   const [cartItemCount, setCartItemCount] = useState(0)
 
   useEffect(() => {
-    const savedCart = localStorage.getItem('taazaCart')
-    if (savedCart) {
-      const cartItems = JSON.parse(savedCart)
+      const savedCart = localStorage.getItem('taazaCart')
+      if (savedCart) {
+        const cartItems = JSON.parse(savedCart)
       setCartItemCount(cartItems.length)
     }
   }, [])
@@ -216,11 +216,11 @@ function Header() {
         `}
       </style>
 
-      <header style={headerStyle}>
+    <header style={headerStyle}>
         <div style={containerStyle} className="header-container">
-          <Link to="/" style={logoStyle}>
+      <Link to="/" style={logoStyle}>
             <span className="logo-text">🍗 Taaza</span>
-          </Link>
+      </Link>
 
           {/* Desktop Navigation */}
           <nav className="desktop-nav" style={desktopNavStyle}>
@@ -290,7 +290,7 @@ function Header() {
                 🔐 Login
               </Link>
             )}
-          </nav>
+      </nav>
 
           {/* Mobile Menu Button */}
           <button 
@@ -365,8 +365,8 @@ function Header() {
               </li>
             )}
 
-            {user ? (
-              <>
+        {user ? (
+          <>
                 <li>
                   <span style={mobileNavLinkStyle} className="mobile-nav-link">
                     👤 {user.name || user.email}
@@ -387,10 +387,10 @@ function Header() {
                     className="mobile-nav-link"
                   >
                     🚪 Logout
-                  </button>
+            </button>
                 </li>
-              </>
-            ) : (
+          </>
+        ) : (
               <li>
                 <Link 
                   to="/login" 
@@ -399,12 +399,12 @@ function Header() {
                   onClick={closeMobileMenu}
                 >
                   🔐 Login
-                </Link>
+          </Link>
               </li>
-            )}
+        )}
           </ul>
         </nav>
-      </header>
+    </header>
     </>
   )
 }

@@ -1,7 +1,6 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -39,4 +38,35 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Ensure full width on all devices */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Responsive viewport meta tag support */
+@media screen and (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  html {
+    font-size: 18px;
+  }
 }

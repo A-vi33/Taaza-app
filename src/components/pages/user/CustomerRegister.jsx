@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase';
+import { db } from '../../../firebase';
 import { setDoc, doc } from 'firebase/firestore';
 
 function CustomerRegister() {
@@ -50,14 +50,14 @@ function CustomerRegister() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4 text-center">Customer Register</h2>
-        <form onSubmit={handleRegister}>
+    <div className="responsive-container responsive-p-4 sm:responsive-p-8 flex items-center justify-center main-content bg-gray-100">
+      <div className="responsive-card responsive-p-6 sm:responsive-p-8 w-full max-w-md mx-auto">
+        <h2 className="responsive-text-xl sm:responsive-text-2xl font-bold mb-6 text-center text-gray-900">Customer Register</h2>
+        <form onSubmit={handleRegister} className="space-y-4">
           <input
             type="text"
             placeholder="Full Name"
-            className="w-full mb-3 p-2 border rounded"
+            className="responsive-btn border rounded w-full focus:ring-2 focus:ring-green-400 transition touch-target"
             value={name}
             onChange={e => setName(e.target.value)}
             required
@@ -65,7 +65,7 @@ function CustomerRegister() {
           <input
             type="email"
             placeholder="Email Address"
-            className="w-full mb-3 p-2 border rounded"
+            className="responsive-btn border rounded w-full focus:ring-2 focus:ring-green-400 transition touch-target"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
@@ -73,7 +73,7 @@ function CustomerRegister() {
           <input
             type="tel"
             placeholder="Mobile Number"
-            className="w-full mb-3 p-2 border rounded"
+            className="responsive-btn border rounded w-full focus:ring-2 focus:ring-green-400 transition touch-target"
             value={mobile}
             onChange={e => setMobile(e.target.value)}
             required
@@ -81,7 +81,7 @@ function CustomerRegister() {
           <input
             type="password"
             placeholder="Password"
-            className="w-full mb-3 p-2 border rounded"
+            className="responsive-btn border rounded w-full focus:ring-2 focus:ring-green-400 transition touch-target"
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
@@ -89,19 +89,28 @@ function CustomerRegister() {
           <input
             type="password"
             placeholder="Confirm Password"
-            className="w-full mb-3 p-2 border rounded"
+            className="responsive-btn border rounded w-full focus:ring-2 focus:ring-green-400 transition touch-target"
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
             required
           />
-          <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700" type="submit">
+          <button 
+            className="w-full responsive-btn bg-green-600 text-white rounded hover:bg-green-700 transition font-semibold touch-target" 
+            type="submit"
+          >
             Register
           </button>
         </form>
-        {error && <div className="text-red-600 mt-2 text-center">{error}</div>}
-        {success && <div className="text-green-600 mt-2 text-center">{success}</div>}
-        <div className="mt-4 text-center">
-          <a href="/login" className="text-blue-600 underline">Already have an account? Login here</a>
+        {error && <div className="text-red-600 mt-4 text-center responsive-text-sm">{error}</div>}
+        {success && <div className="text-green-600 mt-4 text-center responsive-text-sm">{success}</div>}
+        
+        <div className="mt-6 text-center">
+          <p className="responsive-text-sm text-gray-600">
+            Already have an account?{' '}
+            <a href="/login" className="text-blue-600 hover:underline font-semibold">
+              Login here
+            </a>
+          </p>
         </div>
       </div>
     </div>

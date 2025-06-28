@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase';
+import { db } from '../../../firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 function Orders() {
@@ -33,8 +33,8 @@ function Orders() {
   }, [user]);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Your Orders</h1>
+    <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content">
+      <h1 className="responsive-text-2xl font-bold mb-4">Your Orders</h1>
       {loading ? (
         <div>Loading...</div>
       ) : orders.length === 0 ? (

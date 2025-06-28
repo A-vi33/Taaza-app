@@ -43,7 +43,7 @@ function AdminRegister() {
 
   if (adminExists) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex items-center justify-center main-content bg-gray-100">
         <div className="bg-white p-8 rounded shadow-md w-full max-w-md text-center">
           <h2 className="text-2xl font-bold mb-4">Admin Already Registered</h2>
           <p className="text-gray-500">Redirecting to admin login...</p>
@@ -53,7 +53,7 @@ function AdminRegister() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center main-content bg-gray-100">
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Admin Register</h2>
         <form onSubmit={handleRegister}>

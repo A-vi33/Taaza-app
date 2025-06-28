@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -51,6 +51,18 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const value = { user, setUser, loading };
+  const logout = async () => {
+    try {
+      const auth = getAuth();
+      await signOut(auth);
+      setUser(null);
+      // Clear any stored cart data
+      localStorage.removeItem('taazaCart');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  const value = { user, setUser, loading, logout };
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 } 

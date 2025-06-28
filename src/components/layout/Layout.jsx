@@ -11,11 +11,13 @@ function Layout() {
       '/login', '/register', '/admin/register'
     ].some(path => location.pathname.startsWith(path));
     return (
-      <>
+      <div className="page-container">
         {!hideHeaderFooter && <Header />}
-        {children}
+        <main className="main-content">
+          {children}
+        </main>
         {!hideHeaderFooter && <Footer />}
-      </>
+      </div>
     );
   }
 

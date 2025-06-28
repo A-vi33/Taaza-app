@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { db } from '../../firebase';
+import { db } from '../../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 function OrderConfirmation() {
@@ -23,12 +23,12 @@ function OrderConfirmation() {
     fetchOrder();
   }, [orderId]);
 
-  if (loading) return <div className="p-8 text-center">Loading order...</div>;
-  if (!order) return <div className="p-8 text-center text-red-600">Order not found.</div>;
+  if (loading) return <div className="responsive-container responsive-p-8 text-center main-content">Loading order...</div>;
+  if (!order) return <div className="responsive-container responsive-p-8 text-center text-red-600 main-content">Order not found.</div>;
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Order Confirmed!</h1>
+    <div className="responsive-container responsive-p-4 sm:responsive-p-8 max-w-xl mx-auto main-content">
+      <h1 className="responsive-text-2xl font-bold mb-4">Order Confirmed!</h1>
       <p className="mb-2">Thank you for your order, <span className="font-semibold">{order.user?.name}</span>!</p>
       <p className="mb-4">Order ID: <span className="font-mono">{orderId}</span></p>
       <h2 className="text-lg font-bold mb-2">Order Summary</h2>

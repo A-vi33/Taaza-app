@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import meatImg from '../../assets/breast.png'; // Use any meat image you have
+import meatImg from '../../../assets/breast.png'; // Use any meat image you have
 
 function CommonLogin() {
   const [email, setEmail] = useState('');

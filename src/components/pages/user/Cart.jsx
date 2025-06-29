@@ -5,6 +5,7 @@ import { db, storage } from '../../../firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { sendOrderNotifications } from '../../../utils/notifications';
+import { generateOrderId } from '../../../utils/orderUtils';
 
 function Cart(props) {
   const { user, loading: authLoading } = useAuth();
@@ -90,12 +91,12 @@ function Cart(props) {
     });
   };
 
-  const sendSMS = async (phone, message) => {
+  const sendSMS = async (phone, message, orderId, paymentId) => {
     try {
       // Use the new notification utility
       await sendOrderNotifications(
         phone, 
-        orderRef.id, 
+        orderId, 
         paymentId, 
         total, 
         cartItems, 
@@ -117,6 +118,9 @@ function Cart(props) {
     try {
       const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
+      // Generate sequential order ID
+      const orderId = await generateOrderId();
+      
       // Load Razorpay script
       const res = await loadRazorpayScript();
       if (!res) {
@@ -126,12 +130,14 @@ function Cart(props) {
 
       // Store order in Firestore first
       const orderRef = await addDoc(collection(db, 'orders'), {
+        orderId: orderId,
         cart: cartItems,
         user: { name: user?.name, phone: user?.mobile, email: user?.email || '' },
         paymentId: '',
         status: 'pending',
         createdAt: serverTimestamp(),
-        fulfilled: false
+        fulfilled: false,
+        source: 'online'
       });
       
       const options = {
@@ -169,6 +175,7 @@ function Cart(props) {
             // Save transaction
             await addDoc(collection(db, 'transactions'), {
               orderId: orderRef.id,
+              orderNumber: orderId,
               transactionId: paymentId,
               amount: total,
               status: 'success',
@@ -189,7 +196,7 @@ function Cart(props) {
                 <p><strong>Name:</strong> ${user?.name}</p>
                 <p><strong>Phone:</strong> ${user?.mobile}</p>
                 <p><strong>Email:</strong> ${user?.email || ''}</p>
-                <p><strong>Order ID:</strong> ${orderRef.id}</p>
+                <p><strong>Order ID:</strong> ${orderId}</p>
                 <p><strong>Transaction ID:</strong> ${paymentId}</p>
                 <table border='1' cellpadding='8' cellspacing='0' style='margin-top:16px;width:100%;'>
                   <thead><tr><th>Item</th><th>Weight</th><th>Qty</th><th>Price</th></tr></thead>
@@ -285,14 +292,14 @@ function Cart(props) {
             
             // Send SMS receipt to customer
             if (user?.mobile) {
-              const smsMessage = `Thank you for your order! Order ID: ${orderRef.id}, Amount: ₹${total}, Items: ${cartItems.map(item => `${item.name} (${item.weight}g)`).join(', ')}. Payment ID: ${paymentId}`;
-              await sendSMS(user.mobile, smsMessage);
+              const smsMessage = `Thank you for your order! Order ID: ${orderId}, Amount: ₹${total}, Items: ${cartItems.map(item => `${item.name} (${item.weight}g)`).join(', ')}. Payment ID: ${paymentId}`;
+              await sendSMS(user.mobile, smsMessage, orderId, paymentId);
             }
             
             // Clear cart and redirect
             setCartItems([]);
             localStorage.removeItem('taazaCart');
-            navigate(`/order-confirmation?orderId=${orderRef.id}`);
+            navigate(`/order-confirmation?orderId=${orderId}`);
             
           } catch (error) {
             console.error('Error processing payment:', error);
@@ -322,80 +329,165 @@ function Cart(props) {
 
   if (cartItems.length === 0) {
     return (
-      <div className="responsive-container responsive-p-8 text-center main-content">
-        <div className="responsive-card responsive-p-8">
-          <h1 className="responsive-text-2xl font-bold mb-6">Your Cart</h1>
-          <p className="responsive-text-lg text-gray-500">Your cart is empty.</p>
-          <Link to="/" className="responsive-btn bg-green-600 text-white inline-block mt-4 hover:bg-green-700 transition">
-            Continue Shopping
-          </Link>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-8 text-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <span className="text-3xl">🛒</span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-4">Your Cart is Empty</h1>
+            <p className="text-slate-600 text-lg mb-8">Looks like you haven't added any items yet.</p>
+            <Link 
+              to="/" 
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-semibold rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              🍗 Start Shopping
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content">
-      <div className="responsive-card responsive-p-4 sm:responsive-p-8 max-w-4xl mx-auto">
-        <h1 className="responsive-text-2xl sm:responsive-text-3xl font-bold mb-6 text-center">Your Cart</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                🛒
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-800">Shopping Cart</h1>
+                <p className="text-slate-600">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your cart</p>
+              </div>
+            </div>
+            <div className="hidden sm:block">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg">
+                Total: ₹{total}
+              </div>
+            </div>
+          </div>
+        </div>
         
-        <div className="space-y-4 mb-6">
+        {/* Cart Items */}
+        <div className="space-y-4 mb-8">
           {cartItems.map(item => (
-            <div key={item.id + '-' + item.weight} className="responsive-card responsive-p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <img 
-                src={item.imageUrl} 
-                alt={item.name} 
-                className="w-full sm:w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="responsive-text-lg font-bold text-gray-900 mb-2">{item.name}</h3>
-                <p className="responsive-text-sm text-gray-500 mb-2">{item.weight}g</p>
-                <p className="responsive-text-sm text-blue-600 mb-2">
-                  📦 Available: {products.find(p => p.id === item.id)?.quantity || 0} kg
-                </p>
-                <p className="responsive-text-base mb-3">
-                  ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-600">₹{item.price * item.quantity}</span>
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button 
-                    className="responsive-btn bg-gray-200 hover:bg-gray-300 transition touch-target" 
-                    onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)} 
-                    disabled={item.quantity <= 1}
-                  >
-                    -
-                  </button>
-                  <span className="responsive-text-base font-medium mx-2 min-w-[2rem] text-center">{item.quantity}</span>
-                  <button 
-                    className="responsive-btn bg-gray-200 hover:bg-gray-300 transition touch-target" 
-                    onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                  >
-                    +
-                  </button>
-                  <button 
-                    className="responsive-btn bg-red-600 text-white hover:bg-red-700 transition ml-2 sm:ml-4 touch-target" 
-                    onClick={() => removeItem(item.id, item.weight)}
-                  >
-                    Remove
-                  </button>
+            <div key={item.id + '-' + item.weight} className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 hover:shadow-2xl transition-all duration-300">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                {/* Product Image */}
+                <div className="relative">
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name} 
+                    className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl shadow-lg" 
+                  />
+                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                    {item.category}
+                  </div>
+                </div>
+                
+                {/* Product Details */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">{item.name}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-sm text-slate-600 font-medium">Weight</p>
+                      <p className="text-lg font-bold text-slate-800">{item.weight}g</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-sm text-slate-600 font-medium">Price</p>
+                      <p className="text-lg font-bold text-slate-800">₹{item.price}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <p className="text-sm text-slate-600 font-medium">Available</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {products.find(p => p.id === item.id)?.quantity || 0} kg
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Quantity Controls */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <button 
+                        className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" 
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)} 
+                        disabled={item.quantity <= 1}
+                      >
+                        <span className="text-lg font-bold">−</span>
+                      </button>
+                      <span className="text-xl font-bold text-slate-800 min-w-[3rem] text-center">{item.quantity}</span>
+                      <button 
+                        className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105" 
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                      >
+                        <span className="text-lg font-bold">+</span>
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm text-slate-600">Subtotal</p>
+                        <p className="text-2xl font-bold text-green-600">₹{item.price * item.quantity}</p>
+                      </div>
+                      <button 
+                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105" 
+                        onClick={() => removeItem(item.id, item.weight)}
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
         
-        <div className="responsive-card responsive-p-4 bg-gray-50 rounded-lg mb-6">
-          <div className="flex justify-between items-center">
-            <span className="responsive-text-xl font-bold">Total:</span>
-            <span className="responsive-text-xl font-bold text-green-600">₹{total}</span>
+        {/* Order Summary */}
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-lg shadow-lg">
+              📋
+            </div>
+            Order Summary
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-3 border-b border-slate-200">
+              <span className="text-slate-600 font-medium">Items ({cartItems.length})</span>
+              <span className="text-slate-800 font-semibold">{cartItems.length}</span>
+            </div>
+            <div className="flex justify-between items-center py-3 border-b border-slate-200">
+              <span className="text-slate-600 font-medium">Subtotal</span>
+              <span className="text-slate-800 font-semibold">₹{total}</span>
+            </div>
+            <div className="flex justify-between items-center py-3 border-b border-slate-200">
+              <span className="text-slate-600 font-medium">Delivery</span>
+              <span className="text-green-600 font-semibold">Free</span>
+            </div>
+            <div className="flex justify-between items-center pt-3">
+              <span className="text-2xl font-bold text-slate-800">Total</span>
+              <span className="text-3xl font-bold text-green-600">₹{total}</span>
+            </div>
           </div>
         </div>
         
-        <button 
-          className="w-full responsive-btn bg-green-600 text-white hover:bg-green-700 transition font-semibold touch-target" 
-          onClick={handleCheckout}
-        >
-          Proceed to Checkout
-        </button>
+        {/* Checkout Button */}
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6">
+          <button 
+            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105" 
+            onClick={handleCheckout}
+          >
+            🚀 Proceed to Checkout - ₹{total}
+          </button>
+          <p className="text-center text-slate-600 mt-4 text-sm">
+            Secure payment powered by Razorpay
+          </p>
+        </div>
       </div>
     </div>
   );

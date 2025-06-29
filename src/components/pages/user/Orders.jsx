@@ -26,20 +26,26 @@ function Orders() {
     // Create real-time listener for orders
     const q = query(
       collection(db, 'orders'),
-      where('user.phone', '==', user.mobile),
-      orderBy('createdAt', 'desc')
+      where('user.phone', '==', user.mobile)
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const ordersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
+      // Sort orders by creation date (newest first)
+      const sortedOrders = ordersData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB - dateA;
+      });
+      
       // Check if new orders were added
-      if (ordersData.length > orders.length && orders.length > 0) {
+      if (sortedOrders.length > orders.length && orders.length > 0) {
         setShowNewOrderNotification(true);
         setTimeout(() => setShowNewOrderNotification(false), 5000); // Hide after 5 seconds
       }
       
-      setOrders(ordersData);
+      setOrders(sortedOrders);
       setLoading(false);
     }, (error) => {
       console.error('Error fetching orders:', error);
@@ -145,16 +151,32 @@ function Orders() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-gray-800">Order #{order.id.slice(-8)}</h3>
+                        <h3 className="font-semibold text-gray-800">Order #{order.orderId || order.id.slice(-8)}</h3>
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
                           {getStatusText(order.status)}
                         </span>
+                        {order.source && (
+                          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            {order.source}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-600">
-                        {order.createdAt?.toDate?.().toLocaleString() || 'Date not available'}
-                      </p>
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Date:</span> {order.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Time:</span> {order.createdAt?.toDate?.().toLocaleTimeString() || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Items:</span> {order.cart?.length || 0} items
+                        </div>
+                        <div>
+                          <span className="font-medium">Weight:</span> {order.cart?.reduce((sum, item) => sum + (item.weight * item.quantity), 0) || 0}g
+                        </div>
+                      </div>
                       {order.paymentId && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-2">
                           Payment ID: {order.paymentId}
                         </p>
                       )}
@@ -189,14 +211,36 @@ function Orders() {
                     {/* Order Items */}
                     <div className="mb-6">
                       <h4 className="font-semibold text-gray-800 mb-3">Order Items</h4>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {order.cart?.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                            <div>
-                              <p className="font-medium text-gray-800">{item.name}</p>
-                              <p className="text-sm text-gray-600">{item.weight}g × {item.quantity}</p>
+                          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="md:col-span-2">
+                                <div className="font-semibold text-gray-800 mb-2">{item.name}</div>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">Weight:</span>
+                                    <span className="ml-2 font-semibold">{item.weight}g</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Quantity:</span>
+                                    <span className="ml-2 font-semibold">{item.quantity}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Price per kg:</span>
+                                    <span className="ml-2 font-semibold">₹{item.price}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Total Weight:</span>
+                                    <span className="ml-2 font-semibold">{(item.weight * item.quantity)}g</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-green-600 text-lg">₹{item.price * item.quantity}</div>
+                                <div className="text-gray-500 text-sm">₹{item.price}/kg</div>
+                              </div>
                             </div>
-                            <p className="font-semibold text-gray-800">₹{item.price * item.quantity}</p>
                           </div>
                         ))}
                       </div>
@@ -210,7 +254,7 @@ function Orders() {
                           target={order.billType === 'blob' ? undefined : '_blank'}
                           rel={order.billType === 'blob' ? undefined : 'noopener noreferrer'}
                           className="flex-1 bg-blue-600 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                          download={order.billType === 'blob' ? `Taaza-Bill-${order.id}.pdf` : undefined}
+                          download={order.billType === 'blob' ? `Taaza-Bill-${order.orderId || order.id}.pdf` : undefined}
                         >
                           📄 Download E-Bill
                         </a>

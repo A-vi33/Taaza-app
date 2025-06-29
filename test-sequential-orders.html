@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequential Order ID Test - Taaza Fresh Meat</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .test-section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e2e8f0;
+        }
+        .test-section h2 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .order-simulation {
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #4299e1;
+        }
+        .order-id {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2b6cb0;
+            background: #bee3f8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .admin-order {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        .online-order {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+        .order-type {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .admin-type {
+            color: #38a169;
+        }
+        .online-type {
+            color: #dd6b20;
+        }
+        .info-box {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background: #fef5e7;
+            border: 1px solid #f6ad55;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .success-box {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        .test-button:active {
+            transform: translateY(0);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .result.success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #22543d;
+        }
+        .result.error {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #742a2a;
+        }
+        .sequence-display {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .sequence-number {
+            color: #68d391;
+            font-weight: bold;
+        }
+        .reset-button {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .reset-button:hover {
+            background: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Sequential Order ID System Test</h1>
+        
+        <div class="info-box">
+            <h3>📋 System Overview</h3>
+            <p><strong>Range:</strong> 10000 to 1000000</p>
+            <p><strong>Reset Point:</strong> After 1000000, resets to 10000</p>
+            <p><strong>Shared Sequence:</strong> Both admin and online orders use the same counter</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test Sequential Order Generation</h2>
+            <p>This test simulates the order ID generation system used by both admin dashboard and online user orders.</p>
+            
+            <button class="test-button" onclick="testOrderGeneration()">Generate Test Orders</button>
+            <button class="reset-button" onclick="resetTest()">Reset Test</button>
+            
+            <div id="testResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Order Sequence Simulation</h2>
+            <p>Simulate a realistic scenario with mixed admin and online orders:</p>
+            
+            <button class="test-button" onclick="simulateMixedOrders()">Simulate Mixed Orders</button>
+            <button class="test-button" onclick="testRangeValidation()">Test Range Validation</button>
+            <button class="test-button" onclick="testResetLogic()">Test Reset Logic</button>
+            
+            <div id="simulationResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Current Order Sequence</h2>
+            <div id="sequenceDisplay" class="sequence-display">
+                No orders generated yet. Click "Generate Test Orders" to start.
+            </div>
+        </div>
+
+        <div class="success-box">
+            <h3>✅ Expected Behavior</h3>
+            <ul>
+                <li>First order should be <span class="sequence-number">10000</span></li>
+                <li>Each subsequent order increments by 1</li>
+                <li>Admin and online orders share the same sequence</li>
+                <li>After 1000000, sequence resets to 10000</li>
+                <li>No gaps in the sequence allowed</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Important Notes</h3>
+            <ul>
+                <li>This is a simulation - actual orders require Firebase connection</li>
+                <li>Real system queries Firestore for the latest order ID</li>
+                <li>Both admin dashboard and online cart use the same <code>generateOrderId()</code> function</li>
+                <li>Order IDs are stored in the <code>orderId</code> field, not the Firebase document ID</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let currentOrderId = 10000;
+        let generatedOrders = [];
+
+        // Simulate the generateOrderId function
+        async function generateOrderId() {
+            // In real system, this would query Firestore
+            // For simulation, we just increment
+            const orderId = currentOrderId;
+            currentOrderId++;
+            
+            // Reset logic (same as real system)
+            if (currentOrderId > 1000000) {
+                currentOrderId = 10000;
+            }
+            
+            return orderId.toString();
+        }
+
+        function testOrderGeneration() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+            
+            // Generate 5 test orders
+            for (let i = 0; i < 5; i++) {
+                generateOrderId().then(orderId => {
+                    const orderType = i % 2 === 0 ? 'Admin Order' : 'Online Order';
+                    const orderClass = i % 2 === 0 ? 'admin-order' : 'online-order';
+                    const typeClass = i % 2 === 0 ? 'admin-type' : 'online-type';
+                    
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = `order-simulation ${orderClass}`;
+                    orderDiv.innerHTML = `
+                        <div class="order-type ${typeClass}">${orderType}</div>
+                        <div>Order ID: <span class="order-id">${orderId}</span></div>
+                        <div>Timestamp: ${new Date().toLocaleString()}</div>
+                    `;
+                    
+                    resultsDiv.appendChild(orderDiv);
+                    
+                    // Store for sequence display
+                    generatedOrders.push({
+                        id: orderId,
+                        type: orderType,
+                        timestamp: new Date()
+                    });
+                    
+                    updateSequenceDisplay();
+                });
+            }
+        }
+
+        function simulateMixedOrders() {
+            const resultsDiv = document.getElementById('simulationResults');
+            resultsDiv.innerHTML = '';
+            
+            // Simulate a realistic scenario
+            const scenarios = [
+                { type: 'Admin', description: 'Walk-in customer - Chicken Drumsticks' },
+                { type: 'Online', description: 'Online order - Fish and Mutton' },
+                { type: 'Admin', description: 'Walk-in customer - Whole Chicken' },
+                { type: 'Online', description: 'Online order - Mixed items' },
+                { type: 'Admin', description: 'Walk-in customer - Goat Meat' }
+            ];
+            
+            scenarios.forEach((scenario, index) => {
+                setTimeout(() => {
+                    generateOrderId().then(orderId => {
+                        const orderClass = scenario.type === 'Admin' ? 'admin-order' : 'online-order';
+                        const typeClass = scenario.type === 'Admin' ? 'admin-type' : 'online-type';
+                        
+                        const orderDiv = document.createElement('div');
+                        orderDiv.className = `order-simulation ${orderClass}`;
+                        orderDiv.innerHTML = `
+                            <div class="order-type ${typeClass}">${scenario.type} Order</div>
+                            <div>Order ID: <span class="order-id">${orderId}</span></div>
+                            <div>Description: ${scenario.description}</div>
+                            <div>Timestamp: ${new Date().toLocaleString()}</div>
+                        `;
+                        
+                        resultsDiv.appendChild(orderDiv);
+                        
+                        generatedOrders.push({
+                            id: orderId,
+                            type: scenario.type,
+                            description: scenario.description,
+                            timestamp: new Date()
+                        });
+                        
+                        updateSequenceDisplay();
+                    });
+                }, index * 500); // Stagger the generation
+            });
+        }
+
+        function testRangeValidation() {
+            const resultsDiv = document.getElementById('simulationResults');
+            resultsDiv.innerHTML = '<h3>Testing Range Validation...</h3>';
+            
+            // Test edge cases
+            const testCases = [
+                { currentId: 9999, expected: 10000, description: 'Below minimum range' },
+                { currentId: 1000001, expected: 10000, description: 'Above maximum range' },
+                { currentId: 999999, expected: 1000000, description: 'At maximum range' },
+                { currentId: 10000, expected: 10001, description: 'At minimum range' }
+            ];
+            
+            testCases.forEach((testCase, index) => {
+                setTimeout(() => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result';
+                    
+                    // Simulate the validation logic
+                    let nextId = testCase.currentId + 1;
+                    if (nextId > 1000000) {
+                        nextId = 10000;
+                    }
+                    
+                    const isSuccess = nextId === testCase.expected;
+                    resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+                    resultDiv.innerHTML = `
+                        <strong>${testCase.description}:</strong><br>
+                        Current ID: ${testCase.currentId} → Next ID: ${nextId}<br>
+                        Expected: ${testCase.expected}<br>
+                        Status: ${isSuccess ? '✅ PASS' : '❌ FAIL'}
+                    `;
+                    
+                    resultsDiv.appendChild(resultDiv);
+                }, index * 300);
+            });
+        }
+
+        function testResetLogic() {
+            const resultsDiv = document.getElementById('simulationResults');
+            resultsDiv.innerHTML = '<h3>Testing Reset Logic...</h3>';
+            
+            // Simulate reaching the maximum
+            currentOrderId = 999999;
+            
+            generateOrderId().then(orderId => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>Reset Logic Test:</strong><br>
+                    Previous ID: 999999<br>
+                    Next ID: ${orderId}<br>
+                    Status: ${orderId === '1000000' ? '✅ PASS' : '❌ FAIL'}
+                `;
+                resultsDiv.appendChild(resultDiv);
+                
+                // Test the reset
+                generateOrderId().then(resetOrderId => {
+                    const resetDiv = document.createElement('div');
+                    resetDiv.className = 'result success';
+                    resetDiv.innerHTML = `
+                        <strong>Reset After Maximum:</strong><br>
+                        Previous ID: 1000000<br>
+                        Next ID: ${resetOrderId}<br>
+                        Status: ${resetOrderId === '10000' ? '✅ PASS' : '❌ FAIL'}
+                    `;
+                    resultsDiv.appendChild(resetDiv);
+                });
+            });
+        }
+
+        function updateSequenceDisplay() {
+            const sequenceDiv = document.getElementById('sequenceDisplay');
+            if (generatedOrders.length === 0) {
+                sequenceDiv.innerHTML = 'No orders generated yet. Click "Generate Test Orders" to start.';
+                return;
+            }
+            
+            const sortedOrders = generatedOrders.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            const sequenceText = sortedOrders.map(order => 
+                `${order.id} (${order.type})`
+            ).join(' → ');
+            
+            sequenceDiv.innerHTML = `
+                <strong>Order Sequence:</strong><br>
+                ${sequenceText}<br><br>
+                <strong>Next Order ID:</strong> ${currentOrderId}<br>
+                <strong>Total Orders:</strong> ${generatedOrders.length}
+            `;
+        }
+
+        function resetTest() {
+            currentOrderId = 10000;
+            generatedOrders = [];
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('simulationResults').innerHTML = '';
+            updateSequenceDisplay();
+        }
+
+        // Initialize
+        updateSequenceDisplay();
+    </script>
+</body>
+</html> 

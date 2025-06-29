@@ -30,11 +30,13 @@ function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !user.isAdmin)) {
@@ -65,15 +67,19 @@ function AdminOrders() {
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !searchTerm || 
       order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.cart?.[0]?.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      order.orderId?.toString().includes(searchTerm) ||
+      order.cart?.[0]?.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.source?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || order.status === statusFilter;
+    const matchesSource = !sourceFilter || order.source === sourceFilter;
     const matchesDate = !dateFilter || 
       (order.createdAt?.toDate?.()?.toISOString().slice(0, 10) === dateFilter);
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesStatus && matchesSource && matchesDate;
   });
 
-  // Calculate pending orders
-  const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  // Calculate pending orders (include both pending and confirmed statuses)
+  const pendingOrders = orders.filter(order => order.status === 'pending' || order.status === 'confirmed').length;
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -82,6 +88,10 @@ function AdminOrders() {
 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
+  };
+
+  const toggleOrderDetails = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
   const handleFulfill = async (orderId, fulfilled) => {
@@ -121,86 +131,195 @@ function AdminOrders() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
-      <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
+    <div className="relative main-content min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-7xl mx-auto">
         <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} type={toast.type} />
         
         {/* Enhanced Page Header */}
-        <div className="mb-8 pb-6 border-b border-white/20">
+        <div className="mb-8">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="responsive-text-3xl sm:responsive-text-4xl font-bold text-slate-800 mb-2 flex items-center gap-3">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="flex-1">
+                <h2 className="responsive-text-3xl sm:responsive-text-4xl font-bold text-slate-800 mb-3 flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
                     📋
                   </div>
-                  Order Management
+                  Order Management System
                 </h2>
-                <p className="text-slate-600 responsive-text-base sm:responsive-text-lg font-medium">
-                  Track, manage, and fulfill customer orders efficiently
+                <p className="text-slate-600 responsive-text-base sm:responsive-text-lg font-medium mb-4">
+                  Track, manage, and fulfill customer orders efficiently with real-time updates
                 </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold text-sm">
-                  📦 {orders.length} Orders
+                
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-blue-600">{orders.length}</div>
+                    <div className="text-sm text-blue-700 font-medium">Total Orders</div>
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-yellow-600">{pendingOrders}</div>
+                    <div className="text-sm text-yellow-700 font-medium">Pending</div>
+                  </div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-green-600">
+                      {orders.filter(o => o.status === 'paid' || o.status === 'confirmed').length}
+                    </div>
+                    <div className="text-sm text-green-700 font-medium">Active</div>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {orders.filter(o => o.fulfilled).length}
+                    </div>
+                    <div className="text-sm text-purple-700 font-medium">Fulfilled</div>
+                  </div>
                 </div>
-                <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-semibold text-sm">
-                  ⏳ {pendingOrders} Pending
+              </div>
+              
+              <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                  <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg font-semibold text-sm">
+                    🟢 System Online
+                  </div>
+                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold text-sm">
+                    📊 Live Data
+                  </div>
+                </div>
+                <div className="text-right text-sm text-slate-600">
+                  Last updated: {new Date().toLocaleTimeString()}
                 </div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Filters Section */}
+        {/* Enhanced Filters Section */}
         <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
-          <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-4 text-slate-800 flex items-center gap-2" 
+          <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-6 text-slate-800 flex items-center gap-2" 
               style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
               🔍
             </div>
-            Filter Orders
+            Advanced Order Filters
           </h3>
-          <div className="flex flex-col sm:flex-row gap-4">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Search Orders</label>
             <input 
               type="text" 
-              placeholder="Search by order ID or customer name..." 
+                placeholder="Search by order ID, customer name, or source..." 
               value={searchTerm} 
               onChange={(e) => setSearchTerm(e.target.value)} 
-              className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                className="w-full responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
               style={{ fontFamily: 'Inter, sans-serif' }}
             />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
             <select 
               value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value)} 
-              className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                className="w-full responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
               style={{ fontFamily: 'Inter, sans-serif' }}
             >
               <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="fulfilled">Fulfilled</option>
-              <option value="cancelled">Cancelled</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="confirmed">🏪 Confirmed (Offline)</option>
+                <option value="paid">✅ Paid</option>
+                <option value="fulfilled">📦 Fulfilled</option>
+                <option value="cancelled">❌ Cancelled</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Source</label>
+              <select 
+                value={sourceFilter} 
+                onChange={(e) => setSourceFilter(e.target.value)} 
+                className="w-full responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                <option value="">All Sources</option>
+                <option value="admin">🏪 Admin</option>
+                <option value="online">🌐 Online</option>
             </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Date</label>
             <input 
               type="date" 
               value={dateFilter} 
               onChange={(e) => setDateFilter(e.target.value)} 
-              className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                className="w-full responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
               style={{ fontFamily: 'Inter, sans-serif' }}
             />
+            </div>
+          </div>
+          
+          {/* Filter Summary */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {searchTerm && (
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                Search: "{searchTerm}"
+              </span>
+            )}
+            {statusFilter && (
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                Status: {statusFilter}
+              </span>
+            )}
+            {sourceFilter && (
+              <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                Source: {sourceFilter}
+              </span>
+            )}
+            {dateFilter && (
+              <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                Date: {dateFilter}
+              </span>
+            )}
+            {(searchTerm || statusFilter || sourceFilter || dateFilter) && (
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('');
+                  setSourceFilter('');
+                  setDateFilter('');
+                }}
+                className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </div>
         
-        {/* Orders List */}
+        {/* Enhanced Orders List */}
         <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-xl animate-fade-in-up border border-white/20">
-          <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-6 text-slate-800 flex items-center gap-2" 
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h3 className="responsive-text-lg sm:responsive-text-xl font-bold text-slate-800 flex items-center gap-2" 
               style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
               📋
             </div>
-            Order History
+              Order History ({filteredOrders.length} orders)
           </h3>
+            
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-slate-600">
+                Showing {filteredOrders.length} of {orders.length} orders
+              </div>
+              <button 
+                onClick={fetchOrders}
+                className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold flex items-center gap-2"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
           
           {loading ? (
             <div className="text-center py-8">
@@ -221,50 +340,80 @@ function AdminOrders() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredOrders.map(order => (
-                <div key={order.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
-                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="space-y-6">
+              {filteredOrders.map(order => {
+                const total = order.cart?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                const totalWeight = order.cart?.reduce((sum, item) => sum + (item.weight * item.quantity), 0) || 0;
+                const isExpanded = expandedOrder === order.id;
+                
+                return (
+                  <div key={order.id} className="bg-white rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                    {/* Order Header */}
+                    <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-bold text-slate-900 responsive-text-lg" 
+                          {/* Order ID and Status Row */}
+                          <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <h4 className="font-bold text-slate-900 responsive-text-lg flex items-center gap-2" 
                             style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          Order #{order.id.slice(-8)}
+                              <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-sm font-mono">
+                                #{order.orderId || order.id.slice(-8)}
+                              </span>
                         </h4>
+                            
+                            {/* Status Badges */}
+                            <div className="flex flex-wrap gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           order.status === 'paid' 
                             ? 'bg-green-100 text-green-800' 
                             : order.status === 'pending' 
                             ? 'bg-yellow-100 text-yellow-800' 
+                                  : order.status === 'confirmed'
+                                  ? 'bg-blue-100 text-blue-800'
                             : order.status === 'fulfilled' 
                             ? 'bg-blue-100 text-blue-800' 
                             : 'bg-red-100 text-red-800'
                         }`} 
                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                          {order.status === 'paid' ? '✅ Paid' : order.status === 'pending' ? '⏳ Pending' : order.status === 'fulfilled' ? '📦 Fulfilled' : '❌ Cancelled'}
+                                {order.status === 'paid' ? '✅ Paid' : 
+                                 order.status === 'pending' ? '⏳ Pending' : 
+                                 order.status === 'confirmed' ? '🏪 Offline' :
+                                 order.status === 'fulfilled' ? '📦 Fulfilled' : '❌ Cancelled'}
+                              </span>
+                              
+                              {order.source && (
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                  order.source === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+                                }`} 
+                                style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {order.source === 'admin' ? '🏪 Admin' : '🌐 Online'}
                         </span>
+                              )}
+                              
                         {order.fulfilled && (
                           <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800" 
                                 style={{ fontFamily: 'Inter, sans-serif' }}>
                             ✅ Fulfilled
                           </span>
                         )}
+                            </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="text-slate-600 font-medium" 
+                          {/* Order Details Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div className="bg-slate-50 rounded-lg p-3">
+                              <p className="text-slate-600 font-medium mb-1" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
                             Total Amount:
                           </p>
-                          <p className="font-bold text-slate-900" 
+                              <p className="font-bold text-slate-900 text-lg" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            ₹{order.cart?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0}
+                                ₹{total}
                           </p>
                         </div>
                         
-                        <div>
-                          <p className="text-slate-600 font-medium" 
+                            <div className="bg-slate-50 rounded-lg p-3">
+                              <p className="text-slate-600 font-medium mb-1" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
                             Items:
                           </p>
@@ -274,98 +423,234 @@ function AdminOrders() {
                           </p>
                         </div>
                         
-                        <div>
-                          <p className="text-slate-600 font-medium" 
+                            <div className="bg-slate-50 rounded-lg p-3">
+                              <p className="text-slate-600 font-medium mb-1" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Date:
+                                Weight:
                           </p>
                           <p className="font-semibold text-slate-900" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            {order.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                                {totalWeight}g
                           </p>
                         </div>
                         
-                        <div>
-                          <p className="text-slate-600 font-medium" 
+                            <div className="bg-slate-50 rounded-lg p-3">
+                              <p className="text-slate-600 font-medium mb-1" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Time:
+                                Date & Time:
                           </p>
                           <p className="font-semibold text-slate-900" 
+                                 style={{ fontFamily: 'Inter, sans-serif' }}>
+                                {order.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                              </p>
+                              <p className="text-xs text-slate-600" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
                             {order.createdAt?.toDate?.()?.toLocaleTimeString() || 'N/A'}
                           </p>
                         </div>
                       </div>
-                      
-                      {order.cart && order.cart.length > 0 && order.cart[0]?.customerInfo && (
-                        <div className="mt-3 p-3 bg-white/80 rounded-lg border border-slate-200">
-                          <p className="text-slate-600 font-medium mb-1" 
-                             style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Customer Details:
-                          </p>
-                          <p className="font-semibold text-slate-900" 
-                             style={{ fontFamily: 'Inter, sans-serif' }}>
-                            {order.cart[0].customerInfo.name} ({order.cart[0].customerInfo.phone})
-                            {order.cart[0].customerInfo.email && ` | ${order.cart[0].customerInfo.email}`}
-                          </p>
                         </div>
-                      )}
-                      
-                      {order.cart && order.cart.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-slate-600 font-medium mb-2" 
-                             style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Items Ordered:
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {order.cart.map((item, index) => (
-                              <span key={index} className="bg-slate-200 text-slate-800 px-2 py-1 rounded-lg text-xs font-medium" 
-                                    style={{ fontFamily: 'Inter, sans-serif' }}>
-                                {item.name} ({item.weight}g) x{item.quantity}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
+                        
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-2 min-w-fit">
+                          <button 
+                            onClick={() => toggleOrderDetails(order.id)} 
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition shadow-sm font-semibold flex items-center gap-2" 
+                            style={{ fontFamily: 'Inter, sans-serif' }}
+                          >
+                            {expandedOrder === order.id ? '📋 Hide Details' : '📋 Show Details'}
+                          </button>
+                          
                       <button 
                         onClick={() => handleViewDetails(order)} 
-                        className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold" 
+                            className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold flex items-center gap-2" 
                         style={{ fontFamily: 'Inter, sans-serif' }}
                       >
-                        View Details
+                            👁️ Full View
                       </button>
-                      {order.status === 'paid' && !order.fulfilled && (
+                          
+                          {(order.status === 'paid' || order.status === 'confirmed') && !order.fulfilled && (
                         <button 
                           onClick={() => handleFulfill(order.id, true)} 
-                          className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition shadow-sm font-semibold" 
+                              className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition shadow-sm font-semibold flex items-center gap-2" 
                           style={{ fontFamily: 'Inter, sans-serif' }}
                         >
-                          Mark Fulfilled
+                              ✅ Mark Fulfilled
                         </button>
                       )}
+                          
                       {order.fulfilled && (
                         <button 
                           onClick={() => handleFulfill(order.id, false)} 
-                          className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-yellow-700 transition shadow-sm font-semibold" 
+                              className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-yellow-700 transition shadow-sm font-semibold flex items-center gap-2" 
                           style={{ fontFamily: 'Inter, sans-serif' }}
                         >
-                          Mark Unfulfilled
+                              🔄 Mark Unfulfilled
                         </button>
                       )}
+                          
                       <button
                         onClick={() => confirmDeleteOrder(order)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold"
+                            className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold flex items-center gap-2"
                         style={{ fontFamily: 'Inter, sans-serif' }}
                       >
-                        Delete
+                            🗑️ Delete
                       </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Customer Information - Conditional */}
+                    {expandedOrder === order.id && (
+                      <div className="p-6 bg-slate-50 border-b border-slate-200">
+                        <h5 className="font-semibold text-slate-800 mb-3 flex items-center gap-2" 
+                            style={{ fontFamily: 'Inter, sans-serif' }}>
+                          👤 Customer Information
+                        </h5>
+                        
+                        {order.cart && order.cart.length > 0 && order.cart[0]?.customerInfo && (
+                          <div className="bg-white rounded-lg p-4 border border-slate-200">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <span className="text-slate-600 font-medium" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  Name:
+                                </span>
+                                <span className="ml-2 font-semibold text-slate-900" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {order.cart[0].customerInfo.name}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600 font-medium" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  Phone:
+                                </span>
+                                <span className="ml-2 font-semibold text-slate-900" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {order.cart[0].customerInfo.phone}
+                                </span>
+                              </div>
+                              {order.cart[0].customerInfo.email && (
+                                <div>
+                                  <span className="text-slate-600 font-medium" 
+                                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    Email:
+                                  </span>
+                                  <span className="ml-2 font-semibold text-slate-900 break-all" 
+                                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    {order.cart[0].customerInfo.email}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {order.customerName && (
+                          <div className="bg-white rounded-lg p-4 border border-slate-200">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <span className="text-slate-600 font-medium" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  Name:
+                                </span>
+                                <span className="ml-2 font-semibold text-slate-900" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {order.customerName}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600 font-medium" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  Phone:
+                                </span>
+                                <span className="ml-2 font-semibold text-slate-900" 
+                                      style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {order.customerPhone || 'N/A'}
+                                </span>
+                              </div>
+                              {order.customerEmail && (
+                                <div>
+                                  <span className="text-slate-600 font-medium" 
+                                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    Email:
+                                  </span>
+                                  <span className="ml-2 font-semibold text-slate-900 break-all" 
+                                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    {order.customerEmail}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Order Items Preview - Conditional */}
+                    {expandedOrder === order.id && (
+                      <div className="p-6">
+                        <h5 className="font-semibold text-slate-800 mb-3 flex items-center gap-2" 
+                            style={{ fontFamily: 'Inter, sans-serif' }}>
+                          🛒 Order Items ({order.cart?.length || 0} items)
+                        </h5>
+                        
+                        {order.cart && order.cart.length > 0 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {order.cart.map((item, index) => (
+                              <div key={index} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                <div className="font-semibold text-slate-900 mb-2" 
+                                     style={{ fontFamily: 'Inter, sans-serif' }}>
+                                  {item.name}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-slate-600">Weight:</span>
+                                    <span className="ml-1 font-semibold">{item.weight}g</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-600">Qty:</span>
+                                    <span className="ml-1 font-semibold">{item.quantity}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-600">Price:</span>
+                                    <span className="ml-1 font-semibold">₹{item.price}/kg</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-600">Total:</span>
+                                    <span className="ml-1 font-semibold text-green-600">₹{item.price * item.quantity}</span>
                     </div>
                   </div>
                 </div>
               ))}
+                          </div>
+                        )}
+                        
+                        {/* Payment Information */}
+                        {order.paymentId && (
+                          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <h6 className="font-semibold text-blue-800 mb-2 flex items-center gap-2" 
+                                style={{ fontFamily: 'Inter, sans-serif' }}>
+                              💳 Payment Information
+                            </h6>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-blue-600 font-medium">Payment ID:</span>
+                                <span className="ml-2 font-mono text-blue-800 break-all">{order.paymentId}</span>
+                              </div>
+                              <div>
+                                <span className="text-blue-600 font-medium">Method:</span>
+                                <span className="ml-2 font-semibold text-blue-800">{order.paymentMethod || 'Razorpay'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -403,7 +688,7 @@ function AdminOrders() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-sm text-red-800 font-medium" 
                    style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Order ID: {orderToDelete.id?.slice(-8) || 'N/A'}
+                  Order ID: {orderToDelete.orderId || orderToDelete.id?.slice(-8) || 'N/A'}
                 </p>
                 <p className="text-sm text-red-800" 
                    style={{ fontFamily: 'Inter, sans-serif' }}>

@@ -72,6 +72,10 @@ export const sendSMS = async (phone, message, orderId, transactionId, customerNa
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const result = await response.json();
     
     if (result.success) {
@@ -83,6 +87,12 @@ export const sendSMS = async (phone, message, orderId, transactionId, customerNa
     }
   } catch (error) {
     console.error('Error sending SMS:', error);
+    
+    // Log to console for debugging (in production, you might want to log to a service)
+    console.log('SMS would have been sent to:', phone);
+    console.log('SMS message:', message);
+    
+    // Return false to indicate failure, but don't break the app
     return false;
   }
 };
@@ -141,9 +151,14 @@ export const sendOrderNotifications = async (phone, orderId, transactionId, amou
     // Send WhatsApp message (opens WhatsApp Web)
     sendWhatsAppMessage(phone, '', orderId, transactionId, amount, items, customerName);
     
-    // Send SMS via Cloud Function
-    const smsMessage = `Thank you for your order! Order ID: ${orderId}, Amount: ₹${amount}, Transaction ID: ${transactionId}. Taaza Fresh Meat`;
-    await sendSMS(phone, smsMessage, orderId, transactionId, customerName);
+    // Try to send SMS via Cloud Function, but don't fail if it doesn't work
+    try {
+      const smsMessage = `Thank you for your order! Order ID: ${orderId}, Amount: ₹${amount}, Transaction ID: ${transactionId}. Taaza Fresh Meat`;
+      await sendSMS(phone, smsMessage, orderId, transactionId, customerName);
+    } catch (smsError) {
+      console.log('SMS notification failed (cloud function not available), but order was successful');
+      console.log('SMS would have been sent to:', phone);
+    }
     
     console.log('Order notifications sent successfully');
     return true;

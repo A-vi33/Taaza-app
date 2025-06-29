@@ -64,7 +64,7 @@ function AdminTransaction() {
   // Filter transactions by search and date
   const filteredTransactions = transactions.filter(txn => {
     const matchesName = txn.customer?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchesDate = filterDate ? (new Date(txn.date.seconds * 1000).toISOString().slice(0, 10) === filterDate) : true;
+    const matchesDate = filterDate ? (new Date(txn.date?.seconds * 1000).toISOString().slice(0, 10) === filterDate || new Date(txn.createdAt?.seconds * 1000).toISOString().slice(0, 10) === filterDate) : true;
     return matchesName && matchesDate;
   });
 
@@ -128,22 +128,22 @@ function AdminTransaction() {
     const receiptContent = `
       RECEIPT
       ========================
-      Order ID: ${transaction.orderId}
-      Date: ${transaction.timestamp?.toDate?.()?.toLocaleDateString() || 'N/A'}
-      Time: ${transaction.timestamp?.toDate?.()?.toLocaleTimeString() || 'N/A'}
+      Order ID: ${transaction.orderNumber || transaction.orderId}
+      Date: ${transaction.date?.toDate?.()?.toLocaleDateString() || transaction.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+      Time: ${transaction.date?.toDate?.()?.toLocaleTimeString() || transaction.createdAt?.toDate?.()?.toLocaleTimeString() || 'N/A'}
       
       Customer Details:
-      Name: ${transaction.customerInfo?.name || 'N/A'}
-      Phone: ${transaction.customerInfo?.phone || 'N/A'}
-      Email: ${transaction.customerInfo?.email || 'N/A'}
+      Name: ${transaction.customer?.name || 'N/A'}
+      Phone: ${transaction.customer?.phone || 'N/A'}
+      Email: ${transaction.customer?.email || 'N/A'}
       
       Payment Details:
       Amount: ₹${transaction.amount}
-      Payment Method: ${transaction.paymentMethod || 'Razorpay'}
+      Payment Method: ${transaction.paymentMethod || transaction.mode || 'N/A'}
       Status: ${transaction.status}
       
       Items Purchased:
-      ${transaction.items?.map(item => `${item.name} - ${item.weight}g - ₹${item.price * item.quantity}`).join('\n') || 'N/A'}
+      ${transaction.items?.map(item => `${item.name} - ${item.weight}g x${item.quantity} - ₹${item.price * item.quantity}`).join('\n') || 'N/A'}
       
       ========================
       Thank you for your purchase!
@@ -154,7 +154,7 @@ function AdminTransaction() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `receipt-${transaction.orderId}.txt`;
+    a.download = `receipt-${transaction.orderNumber || transaction.orderId}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -260,17 +260,17 @@ function AdminTransaction() {
                       <div className="flex items-center gap-3 mb-2">
                         <h4 className="font-bold text-slate-900 responsive-text-lg" 
                             style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          Order #{transaction.orderId?.slice(-8) || 'N/A'}
+                          Order #{transaction.orderNumber || transaction.orderId?.slice(-8) || 'N/A'}
                         </h4>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          transaction.status === 'paid' 
+                          transaction.status === 'success' || transaction.status === 'paid'
                             ? 'bg-green-100 text-green-800' 
                             : transaction.status === 'pending' 
                             ? 'bg-yellow-100 text-yellow-800' 
                             : 'bg-red-100 text-red-800'
                         }`} 
                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                          {transaction.status === 'paid' ? '✅ Paid' : transaction.status === 'pending' ? '⏳ Pending' : '❌ Failed'}
+                          {transaction.status === 'success' || transaction.status === 'paid' ? '✅ Paid' : transaction.status === 'pending' ? '⏳ Pending' : '❌ Failed'}
                         </span>
                       </div>
                       
@@ -304,7 +304,7 @@ function AdminTransaction() {
                           </p>
                           <p className="font-semibold text-slate-900" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            {transaction.timestamp?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                            {transaction.date?.toDate?.()?.toLocaleDateString() || transaction.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                           </p>
                         </div>
                         
@@ -315,12 +315,12 @@ function AdminTransaction() {
                           </p>
                           <p className="font-semibold text-slate-900" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            {transaction.timestamp?.toDate?.()?.toLocaleTimeString() || 'N/A'}
+                            {transaction.date?.toDate?.()?.toLocaleTimeString() || transaction.createdAt?.toDate?.()?.toLocaleTimeString() || 'N/A'}
                           </p>
                         </div>
                       </div>
                       
-                      {transaction.customerInfo && (
+                      {transaction.customer && (
                         <div className="mt-3 p-3 bg-white/80 rounded-lg border border-slate-200">
                           <p className="text-slate-600 font-medium mb-1" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -328,8 +328,8 @@ function AdminTransaction() {
                           </p>
                           <p className="font-semibold text-slate-900" 
                              style={{ fontFamily: 'Inter, sans-serif' }}>
-                            {transaction.customerInfo.name} ({transaction.customerInfo.phone})
-                            {transaction.customerInfo.email && ` | ${transaction.customerInfo.email}`}
+                            {transaction.customer.name} ({transaction.customer.phone})
+                            {transaction.customer.email && ` | ${transaction.customer.email}`}
                           </p>
                         </div>
                       )}
@@ -344,7 +344,7 @@ function AdminTransaction() {
                             {transaction.items.map((item, index) => (
                               <span key={index} className="bg-slate-200 text-slate-800 px-2 py-1 rounded-lg text-xs font-medium" 
                                     style={{ fontFamily: 'Inter, sans-serif' }}>
-                                {item.name} ({item.weight}g)
+                                {item.name} ({item.weight}g) x{item.quantity}
                               </span>
                             ))}
                           </div>
@@ -360,7 +360,7 @@ function AdminTransaction() {
                       >
                         View Details
                       </button>
-                      {transaction.status === 'paid' && (
+                      {(transaction.status === 'success' || transaction.status === 'paid') && (
                         <button 
                           onClick={() => handleDownloadReceipt(transaction)} 
                           className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition shadow-sm font-semibold" 
@@ -411,7 +411,7 @@ function AdminTransaction() {
                   </p>
                   <p className="font-bold text-slate-900" 
                      style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {selectedOrder.orderId}
+                    {selectedOrder.orderId || selectedOrder.orderNumber || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -420,7 +420,7 @@ function AdminTransaction() {
                     Status:
                   </p>
                   <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    selectedOrder.status === 'paid' 
+                    selectedOrder.status === 'success' || selectedOrder.status === 'paid'
                       ? 'bg-green-100 text-green-800' 
                       : selectedOrder.status === 'pending' 
                       ? 'bg-yellow-100 text-yellow-800' 
@@ -437,7 +437,7 @@ function AdminTransaction() {
                   </p>
                   <p className="font-bold text-slate-900" 
                      style={{ fontFamily: 'Inter, sans-serif' }}>
-                    ₹{selectedOrder.amount}
+                    ₹{selectedOrder.amount || (selectedOrder.cart?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0)}
                   </p>
                 </div>
                 <div>
@@ -452,45 +452,39 @@ function AdminTransaction() {
                 </div>
               </div>
               
-              {selectedOrder.customerInfo && (
+              {selectedOrder.user && (
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <h4 className="font-bold text-slate-800 mb-2" 
                       style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Customer Information
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-slate-600 text-sm" 
+                  <div className="space-y-2">
+                    <p className="text-slate-600" 
+                       style={{ fontFamily: 'Inter, sans-serif' }}>
+                      <strong>Name:</strong> {selectedOrder.user.name || 'N/A'}
+                    </p>
+                    <p className="text-slate-600" 
+                       style={{ fontFamily: 'Inter, sans-serif' }}>
+                      <strong>Phone:</strong> {selectedOrder.user.phone || 'N/A'}
+                    </p>
+                    {selectedOrder.user.email && (
+                      <p className="text-slate-600" 
                          style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Name: <span className="font-semibold text-slate-900">{selectedOrder.customerInfo.name}</span>
+                        <strong>Email:</strong> {selectedOrder.user.email}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600 text-sm" 
-                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Phone: <span className="font-semibold text-slate-900">{selectedOrder.customerInfo.phone}</span>
-                      </p>
-                    </div>
-                    {selectedOrder.customerInfo.email && (
-                      <div className="sm:col-span-2">
-                        <p className="text-slate-600 text-sm" 
-                           style={{ fontFamily: 'Inter, sans-serif' }}>
-                          Email: <span className="font-semibold text-slate-900">{selectedOrder.customerInfo.email}</span>
-                        </p>
-                      </div>
                     )}
                   </div>
                 </div>
               )}
               
-              {selectedOrder.items && selectedOrder.items.length > 0 && (
+              {selectedOrder.cart && selectedOrder.cart.length > 0 && (
                 <div>
                   <h4 className="font-bold text-slate-800 mb-2" 
                       style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Items Purchased
                   </h4>
                   <div className="space-y-2">
-                    {selectedOrder.items.map((item, index) => (
+                    {selectedOrder.cart.map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div>
                           <p className="font-semibold text-slate-900" 
@@ -521,7 +515,7 @@ function AdminTransaction() {
               >
                 Close
               </button>
-              {selectedOrder.status === 'paid' && (
+              {(selectedOrder.status === 'success' || selectedOrder.status === 'paid') && (
                 <button
                   onClick={() => handleDownloadReceipt(selectedOrder)}
                   className="flex-1 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition font-semibold"
@@ -559,7 +553,7 @@ function AdminTransaction() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-sm text-red-800 font-medium" 
                    style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Order ID: {transactionToDelete.orderId?.slice(-8) || 'N/A'}
+                  Order ID: {transactionToDelete.orderNumber || transactionToDelete.orderId?.slice(-8) || 'N/A'}
                 </p>
                 <p className="text-sm text-red-800" 
                    style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -567,7 +561,7 @@ function AdminTransaction() {
                 </p>
                 <p className="text-sm text-red-800" 
                    style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Customer: {transactionToDelete.customerInfo?.name || 'N/A'}
+                  Customer: {transactionToDelete.customer?.name || 'N/A'}
                 </p>
               </div>
             </div>

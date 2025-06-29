@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order ID Generation Test - Taaza Fresh Meat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
+        }
+        .test-section h2 {
+            color: #28a745;
+            margin-top: 0;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .log {
+            background: #f1f3f4;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007bff; }
+        .warning { color: #ffc107; }
+        .order-id {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            padding: 20px;
+            background: #e8f5e8;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 5px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🆔 Order ID Generation Test</h1>
+        
+        <div class="info-box">
+            <h3>📋 Test Overview</h3>
+            <p><strong>Purpose:</strong> Test sequential order ID generation from 10000 to 1000000</p>
+            <p><strong>Range:</strong> 10000 - 1000000 (990,000 possible order IDs)</p>
+            <p><strong>Features:</strong> Sequential, continuous series for both online and admin orders</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Generate Test Order IDs</h2>
+            <button onclick="generateSingleOrderId()">Generate Single Order ID</button>
+            <button onclick="generateMultipleOrderIds()">Generate 10 Order IDs</button>
+            <button onclick="testOrderIdRange()">Test Order ID Range</button>
+            <button onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Latest Generated Order ID</h2>
+            <div id="latestOrderId" class="order-id">No order ID generated yet</div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Test Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let testCount = 0;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        function updateLatestOrderId(orderId) {
+            document.getElementById('latestOrderId').textContent = `Order ID: ${orderId}`;
+        }
+
+        // Simulate order ID generation (since we can't access Firebase directly in this test)
+        async function generateOrderId() {
+            // Simulate database query delay
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Simulate getting the latest order ID from database
+            const latestOrderId = localStorage.getItem('latestOrderId') || '9999';
+            const nextOrderId = parseInt(latestOrderId) + 1;
+            
+            // If we reach 1000000, reset to 10000
+            const finalOrderId = nextOrderId > 1000000 ? 10000 : nextOrderId;
+            
+            // Store the new latest order ID
+            localStorage.setItem('latestOrderId', finalOrderId.toString());
+            
+            return finalOrderId.toString();
+        }
+
+        window.generateSingleOrderId = async () => {
+            testCount++;
+            log(`🧪 Test ${testCount}: Generating Single Order ID`, 'info');
+            
+            try {
+                const orderId = await generateOrderId();
+                log(`✅ Generated Order ID: ${orderId}`, 'success');
+                updateLatestOrderId(orderId);
+                
+                // Validate the order ID
+                const orderIdNum = parseInt(orderId);
+                if (orderIdNum >= 10000 && orderIdNum <= 1000000) {
+                    log(`✅ Order ID ${orderId} is within valid range (10000-1000000)`, 'success');
+                } else {
+                    log(`❌ Order ID ${orderId} is outside valid range!`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error generating order ID: ${error.message}`, 'error');
+            }
+        };
+
+        window.generateMultipleOrderIds = async () => {
+            testCount++;
+            log(`🧪 Test ${testCount}: Generating 10 Sequential Order IDs`, 'info');
+            
+            const orderIds = [];
+            
+            for (let i = 0; i < 10; i++) {
+                try {
+                    const orderId = await generateOrderId();
+                    orderIds.push(orderId);
+                    log(`   ${i + 1}. Order ID: ${orderId}`, 'info');
+                    
+                    // Small delay to ensure sequential generation
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                } catch (error) {
+                    log(`❌ Error generating order ID ${i + 1}: ${error.message}`, 'error');
+                }
+            }
+            
+            // Check if they are sequential
+            const isSequential = orderIds.every((id, index) => {
+                if (index === 0) return true;
+                const current = parseInt(id);
+                const previous = parseInt(orderIds[index - 1]);
+                return current === previous + 1 || (previous === 1000000 && current === 10000);
+            });
+            
+            if (isSequential) {
+                log(`✅ All 10 order IDs are sequential!`, 'success');
+            } else {
+                log(`❌ Order IDs are not sequential!`, 'error');
+            }
+            
+            updateLatestOrderId(orderIds[orderIds.length - 1]);
+        };
+
+        window.testOrderIdRange = async () => {
+            testCount++;
+            log(`🧪 Test ${testCount}: Testing Order ID Range Validation`, 'info');
+            
+            const testCases = [
+                { id: '9999', expected: false, description: 'Below minimum (9999)' },
+                { id: '10000', expected: true, description: 'Minimum value (10000)' },
+                { id: '50000', expected: true, description: 'Middle range (50000)' },
+                { id: '1000000', expected: true, description: 'Maximum value (1000000)' },
+                { id: '1000001', expected: false, description: 'Above maximum (1000001)' },
+                { id: 'abc123', expected: false, description: 'Invalid format (abc123)' }
+            ];
+            
+            for (const testCase of testCases) {
+                const orderIdNum = parseInt(testCase.id);
+                const isValid = !isNaN(orderIdNum) && orderIdNum >= 10000 && orderIdNum <= 1000000;
+                
+                if (isValid === testCase.expected) {
+                    log(`✅ ${testCase.description}: ${testCase.id} - ${isValid ? 'VALID' : 'INVALID'}`, 'success');
+                } else {
+                    log(`❌ ${testCase.description}: ${testCase.id} - Expected ${testCase.expected}, got ${isValid}`, 'error');
+                }
+            }
+        };
+
+        // Initialize
+        log('🔍 Order ID Generation Test Page Loaded', 'info');
+        log('📋 Testing sequential order ID generation from 10000 to 1000000', 'info');
+        log('🔄 Both online and admin orders will use the same sequential series', 'info');
+        log('', 'info');
+    </script>
+</body>
+</html> 

@@ -37,4 +37,42 @@ The current implementation will work without Firebase Storage CORS setup.
 // You can also run this directly with Node.js
 if (require.main === module) {
   console.log('CORS setup instructions displayed above.');
-} 
+}
+
+const { Storage } = require('@google-cloud/storage');
+
+// Initialize Firebase Storage
+const storage = new Storage({
+  projectId: 'taaza-5c5cd',
+  keyFilename: './service-account-key.json' // You'll need to download this from Firebase Console
+});
+
+const bucketName = 'taaza-5c5cd.appspot.com';
+
+async function setCorsConfiguration() {
+  try {
+    const [bucket] = await storage.bucket(bucketName).get();
+    
+    const corsConfiguration = [
+      {
+        origin: ['*'],
+        method: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+        maxAgeSeconds: 3600,
+        responseHeader: [
+          'Content-Type',
+          'Access-Control-Allow-Origin',
+          'Access-Control-Allow-Methods',
+          'Access-Control-Allow-Headers',
+          'Access-Control-Max-Age'
+        ]
+      }
+    ];
+
+    await bucket.setCorsConfiguration(corsConfiguration);
+    console.log(`CORS configuration set for bucket: ${bucketName}`);
+  } catch (error) {
+    console.error('Error setting CORS configuration:', error);
+  }
+}
+
+setCorsConfiguration(); 

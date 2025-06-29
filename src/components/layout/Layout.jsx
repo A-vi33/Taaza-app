@@ -1,7 +1,6 @@
 import React from 'react'
 import Header from '../header/Header'
 import Footer from '../footer/Footer'
-import AdminFooter from '../footer/AdminFooter'
 import Routers from '../routers/Routers'
 import { BrowserRouter as Router, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -36,9 +35,6 @@ function Layout() {
         <div className="admin-layout min-h-screen flex flex-col">
           <div className="flex-1">
             {children}
-          </div>
-          <div className="lg:ml-64">
-            <AdminFooter />
           </div>
         </div>
       );

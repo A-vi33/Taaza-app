@@ -56,7 +56,7 @@ function AdminLayout({ children }) {
         </div>
         
         {/* Sidebar Navigation */}
-        <nav className="mt-6 px-4 h-[calc(100vh-200px)] overflow-y-auto">
+        <nav className="mt-6 px-4 h-[calc(100vh-120px)] overflow-y-auto">
           <div className="space-y-2">
           {adminLinks.map(link => (
             <Link
@@ -94,13 +94,6 @@ function AdminLayout({ children }) {
             </button>
           </div>
         </nav>
-        
-        {/* Sidebar Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-slate-50/80 backdrop-blur-sm">
-          <div className="text-xs text-slate-500 text-center font-medium">
-            Admin Panel v1.0
-          </div>
-        </div>
       </div>
       
       {/* Main Content Area */}

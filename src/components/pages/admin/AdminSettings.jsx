@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import Toast from '../../Toast';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function AdminSettings() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [settings, setSettings] = useState({
@@ -23,8 +27,14 @@ function AdminSettings() {
   });
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (!authLoading && (!user || !user.isAdmin)) {
+      navigate('/login');
+      return;
+    }
+    if (!authLoading && user && user.isAdmin) {
+      fetchSettings();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchSettings = async () => {
     try {

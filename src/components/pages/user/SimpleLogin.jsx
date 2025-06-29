@@ -30,6 +30,8 @@ function SimpleLogin() {
   const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [existingUser, setExistingUser] = useState(null);
+  const [checkingMobile, setCheckingMobile] = useState(false);
 
   // Fixed admin credentials
   const ADMIN_NAME = 'Admin';
@@ -38,6 +40,31 @@ function SimpleLogin() {
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
+  };
+
+  const checkExistingUser = async (mobileNumber) => {
+    if (mobileNumber.length === 10 && /^\d+$/.test(mobileNumber)) {
+      setCheckingMobile(true);
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('mobile', '==', mobileNumber));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const user = querySnapshot.docs[0].data();
+          setExistingUser(user);
+          setName(user.name); // Auto-fill the original name
+        } else {
+          setExistingUser(null);
+        }
+      } catch (error) {
+        console.error('Error checking existing user:', error);
+      } finally {
+        setCheckingMobile(false);
+      }
+    } else {
+      setExistingUser(null);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -92,23 +119,28 @@ function SimpleLogin() {
         userData = { ...newUser, id: docRef.id };
         showToast('New user account created successfully!', 'success');
       } else {
-        // Existing user - update last login
+        // Existing user found - use the original name from database
         const existingUser = querySnapshot.docs[0];
         userData = { id: existingUser.id, ...existingUser.data() };
+        
+        // Check if the provided name is different from the stored name
+        if (name.trim().toLowerCase() !== userData.name.toLowerCase()) {
+          showToast(`Welcome back! Your registered name is: ${userData.name}`, 'success');
+        } else {
+          showToast('Welcome back!', 'success');
+        }
         
         // Update last login time
         await setDoc(doc(db, 'users', existingUser.id), {
           ...userData,
           lastLogin: serverTimestamp()
         }, { merge: true });
-        
-        showToast('Welcome back!', 'success');
       }
 
-      // Set user in context
+      // Set user in context with the name from database (original name)
       setUser({
         type: 'customer',
-        name: userData.name,
+        name: userData.name, // Always use the name from database
         mobile: userData.mobile,
         id: userData.id,
         isAdmin: false
@@ -151,9 +183,22 @@ function SimpleLogin() {
                 maxLength="10"
                 style={{ width: '100%', padding: '0.9rem 1.1rem', borderRadius: 10, border: '1.5px solid #3a3232', background: 'transparent', color: '#fff', fontSize: 16, outline: 'none', marginTop: 4, marginBottom: 2 }}
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
+                onChange={(e) => {
+                  setMobile(e.target.value);
+                  checkExistingUser(e.target.value);
+                }}
                 required
               />
+              {checkingMobile && (
+                <div style={{ color: '#f39c12', fontSize: 14, marginTop: 4 }}>
+                  Checking mobile number...
+                </div>
+              )}
+              {existingUser && (
+                <div style={{ color: '#00b894', fontSize: 14, marginTop: 4, padding: '8px 12px', backgroundColor: 'rgba(0,184,148,0.1)', borderRadius: '6px', border: '1px solid #00b894' }}>
+                  ✅ Welcome back! Your registered name has been auto-filled.
+                </div>
+              )}
             </div>
             <button style={{ width: '100%', background: '#e74c3c', color: 'white', padding: '0.9rem', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 18, marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(231,76,60,0.10)' }} type="submit" disabled={loading}>
               {loading ? 'Signing In...' : 'Sign In'}

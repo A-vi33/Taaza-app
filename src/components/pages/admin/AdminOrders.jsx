@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../firebase';
-import { collection, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import OrderDetailsModal from '../user/OrderDetailsModal';
 
 // Toast notification component
@@ -24,7 +24,7 @@ function Toast({ message, show, onClose, type = 'success' }) {
 }
 
 function AdminOrders() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,12 +33,14 @@ function AdminOrders() {
   const [dateFilter, setDateFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   useEffect(() => {
-    if (!user || !user.isAdmin) {
+    if (!authLoading && (!user || !user.isAdmin)) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchOrders = async () => {
     try {
@@ -93,6 +95,28 @@ function AdminOrders() {
     } catch (error) {
       console.error('Error updating order:', error);
       showToast('Error updating order', 'error');
+    }
+  };
+
+  const confirmDeleteOrder = (order) => {
+    setOrderToDelete(order);
+    setDeleteModalOpen(true);
+  };
+
+  const executeDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    
+    try {
+      const orderRef = doc(db, 'orders', orderToDelete.id);
+      await deleteDoc(orderRef);
+      showToast('Order deleted successfully', 'success');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      showToast('Error deleting order', 'error');
+    } finally {
+      setDeleteModalOpen(false);
+      setOrderToDelete(null);
     }
   };
 
@@ -331,6 +355,13 @@ function AdminOrders() {
                           Mark Unfulfilled
                         </button>
                       )}
+                      <button
+                        onClick={() => confirmDeleteOrder(order)}
+                        className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold"
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -346,6 +377,67 @@ function AdminOrders() {
           order={selectedOrder} 
           onClose={() => setSelectedOrder(null)} 
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && orderToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-slate-200 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-800" 
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                Delete Order
+              </h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-slate-600 mb-3" 
+                 style={{ fontFamily: 'Inter, sans-serif' }}>
+                Are you sure you want to delete this order? This action cannot be undone.
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800 font-medium" 
+                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Order ID: {orderToDelete.id?.slice(-8) || 'N/A'}
+                </p>
+                <p className="text-sm text-red-800" 
+                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Amount: ₹{orderToDelete.cart?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0}
+                </p>
+                <p className="text-sm text-red-800" 
+                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Customer: {orderToDelete.cart?.[0]?.customerInfo?.name || 'N/A'}
+                </p>
+                <p className="text-sm text-red-800" 
+                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Status: {orderToDelete.status}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteModalOpen(false); setOrderToDelete(null); }}
+                className="flex-1 bg-slate-500 text-white px-4 py-2 rounded-xl hover:bg-slate-600 transition font-semibold"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDeleteOrder}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition font-semibold"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

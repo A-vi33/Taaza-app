@@ -72,3 +72,122 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+// Send SMS notification
+exports.sendSMS = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
+
+    try {
+      const { phone, message, orderId, transactionId, customerName } = req.body;
+
+      if (!phone || !message) {
+        return res.status(400).json({ error: 'Phone and message are required' });
+      }
+
+      // For now, we'll just log the SMS
+      // In production, integrate with Twilio, AWS SNS, or any SMS service
+      console.log(`SMS sent to ${phone}: ${message}`);
+      
+      // Example Twilio integration (uncomment and configure):
+      // const twilio = require('twilio');
+      // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      // const result = await client.messages.create({
+      //   body: message,
+      //   from: process.env.TWILIO_PHONE_NUMBER,
+      //   to: phone
+      // });
+
+      // Log the SMS to Firestore for tracking
+      const admin = require('firebase-admin');
+      if (!admin.apps.length) {
+        admin.initializeApp();
+      }
+      
+      await admin.firestore().collection('sms_logs').add({
+        phone: phone,
+        message: message,
+        orderId: orderId,
+        transactionId: transactionId,
+        customerName: customerName,
+        status: 'sent',
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      res.json({
+        success: true,
+        message: 'SMS sent successfully'
+      });
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+});
+
+// Send WhatsApp message (using WhatsApp Business API)
+exports.sendWhatsApp = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
+
+    try {
+      const { phone, message, orderId, transactionId, customerName } = req.body;
+
+      if (!phone || !message) {
+        return res.status(400).json({ error: 'Phone and message are required' });
+      }
+
+      // For now, we'll just log the WhatsApp message
+      // In production, integrate with WhatsApp Business API
+      console.log(`WhatsApp message to ${phone}: ${message}`);
+      
+      // Example WhatsApp Business API integration (uncomment and configure):
+      // const axios = require('axios');
+      // const result = await axios.post('https://graph.facebook.com/v17.0/YOUR_PHONE_NUMBER_ID/messages', {
+      //   messaging_product: 'whatsapp',
+      //   to: phone,
+      //   type: 'text',
+      //   text: { body: message }
+      // }, {
+      //   headers: {
+      //     'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
+
+      // Log the WhatsApp message to Firestore for tracking
+      const admin = require('firebase-admin');
+      if (!admin.apps.length) {
+        admin.initializeApp();
+      }
+      
+      await admin.firestore().collection('whatsapp_logs').add({
+        phone: phone,
+        message: message,
+        orderId: orderId,
+        transactionId: transactionId,
+        customerName: customerName,
+        status: 'sent',
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      res.json({
+        success: true,
+        message: 'WhatsApp message sent successfully'
+      });
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+});

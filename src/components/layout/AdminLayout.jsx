@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaBell, FaUser, FaSearch, FaCaretDown } from 'react-icons/fa';
+import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaUser, FaSearch, FaCaretDown } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import bgImg from '../../assets/bg.jpg';
  
@@ -20,11 +20,6 @@ function AdminLayout({ children }) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifications] = useState([
-    { id: 1, message: 'New order received', time: '2 min ago', type: 'order' },
-    { id: 2, message: 'Low stock alert for Chicken', time: '5 min ago', type: 'stock' },
-    { id: 3, message: 'Payment received', time: '10 min ago', type: 'payment' }
-  ]);
   
   const handleLogout = () => {
     logout();
@@ -41,8 +36,8 @@ function AdminLayout({ children }) {
       )}
       
       {/* Left Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-20 px-6 border-b border-slate-200 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 shadow-lg">
@@ -61,7 +56,7 @@ function AdminLayout({ children }) {
         </div>
         
         {/* Sidebar Navigation */}
-        <nav className="mt-6 px-4">
+        <nav className="mt-6 px-4 h-[calc(100vh-200px)] overflow-y-auto">
           <div className="space-y-2">
           {adminLinks.map(link => (
             <Link
@@ -109,9 +104,9 @@ function AdminLayout({ children }) {
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col lg:ml-64">
         {/* Professional Top Header Bar */}
-        <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200 sticky top-0 z-30">
+        <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200 sticky top-0 z-30 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-6">
             {/* Left Section - Mobile Menu & Search */}
             <div className="flex items-center gap-4">
@@ -142,18 +137,6 @@ function AdminLayout({ children }) {
             
             {/* Right Section - Notifications & User */}
             <div className="flex items-center gap-4">
-              {/* Notifications */}
-              <div className="relative">
-                <button className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors relative">
-                  <FaBell size={18} />
-                  {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {notifications.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-              
               {/* User Menu */}
               <div className="relative">
                 <button 
@@ -201,11 +184,11 @@ function AdminLayout({ children }) {
         </header>
         
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
           <div className="responsive-p-4 sm:responsive-p-6 lg:responsive-p-8">
-        {children || <Outlet />}
+            {children || <Outlet />}
           </div>
-      </main>
+        </main>
       </div>
     </div>
   );

@@ -14,17 +14,39 @@ export function AuthProvider({ children }) {
 
   // Check for stored user data on app load
   useEffect(() => {
-    const storedUser = localStorage.getItem('taaza_user');
-    if (storedUser) {
+    const initializeAuth = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+        const storedUser = localStorage.getItem('taaza_user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          // Verify the user data is still valid by checking with Firestore
+          if (userData.id) {
+            try {
+              const userDoc = await getDoc(doc(db, 'users', userData.id));
+              if (userDoc.exists()) {
+                setUser(userData);
+              } else {
+                // User no longer exists in database, clear storage
+                localStorage.removeItem('taaza_user');
+              }
+            } catch (error) {
+              console.error('Error verifying user data:', error);
+              // If there's an error verifying, still set the user to prevent redirect loops
+              setUser(userData);
+            }
+          } else {
+            setUser(userData);
+          }
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('taaza_user');
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   // Function to update user data

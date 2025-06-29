@@ -6,7 +6,7 @@ import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import Toast from '../../Toast';
 
 function AdminAnalytics() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -24,10 +24,10 @@ function AdminAnalytics() {
   const [onLeaveEmployees, setOnLeaveEmployees] = useState(0);
 
   useEffect(() => {
-    if (!user || !user.isAdmin) {
+    if (!authLoading && (!user || !user.isAdmin)) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchAnalytics = async () => {
     try {

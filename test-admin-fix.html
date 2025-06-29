@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+        .fix-details {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Dashboard Fix Test</h1>
+        <p>Testing the fix for the "fetchProducts is not defined" error.</p>
+
+        <div class="fix-details">
+            <h3>🔍 Issue Identified:</h3>
+            <p><strong>Problem:</strong> The `fetchProducts` function was defined inside a `useEffect` hook, making it inaccessible to the Razorpay handler function.</p>
+            
+            <h3>✅ Fix Applied:</h3>
+            <ul>
+                <li>Moved `fetchProducts` function outside the `useEffect` hook</li>
+                <li>Made it accessible to the Razorpay handler</li>
+                <li>Added error handling around function calls</li>
+                <li>Added proper async/await handling</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Code Changes</h2>
+            
+            <h3>❌ Before (Causing Error):</h3>
+            <div class="code-block">useEffect(() => {
+  const fetchProducts = async () => {
+    // function implementation
+  };
+  fetchProducts();
+}, []);
+
+// In Razorpay handler:
+fetchProducts(); // ❌ ReferenceError: fetchProducts is not defined</div>
+
+            <h3>✅ After (Fixed):</h3>
+            <div class="code-block">const fetchProducts = async () => {
+  // function implementation
+};
+
+useEffect(() => {
+  fetchProducts();
+}, []);
+
+// In Razorpay handler:
+try {
+  await fetchProducts(); // ✅ Works correctly
+} catch (error) {
+  console.error('Error refreshing products:', error);
+}</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test Instructions</h2>
+            <ol>
+                <li>Go to your Admin Dashboard</li>
+                <li>Add items to cart</li>
+                <li>Complete a payment</li>
+                <li>Check that no "fetchProducts is not defined" error occurs</li>
+                <li>Verify that products list refreshes after payment</li>
+                <li>Check browser console for any remaining errors</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Expected Results</h2>
+            <ul>
+                <li class="success">✅ No "fetchProducts is not defined" error</li>
+                <li class="success">✅ Payment completes successfully</li>
+                <li class="success">✅ Orders list refreshes automatically</li>
+                <li class="success">✅ Products list refreshes with updated stock</li>
+                <li class="success">✅ Cart clears after successful payment</li>
+                <li class="success">✅ Success toast message appears</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Debugging Tips</h2>
+            <ul>
+                <li>Open browser console (F12) to see any error messages</li>
+                <li>Look for "Error refreshing products" or "Error refreshing orders" messages</li>
+                <li>Check if the payment modal opens and closes properly</li>
+                <li>Verify that stock quantities update correctly</li>
+                <li>Test with different payment amounts</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 Next Steps</h2>
+            <ol>
+                <li>Test the fix in your application</li>
+                <li>Try making multiple payments to ensure consistency</li>
+                <li>Check that all admin dashboard features work correctly</li>
+                <li>Monitor for any other related errors</li>
+                <li>Test with different product categories</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Admin Dashboard Fix Test Page Loaded');
+        console.log('📋 Instructions:');
+        console.log('1. Test the fix in your Admin Dashboard');
+        console.log('2. Complete a payment and check for errors');
+        console.log('3. Verify that fetchProducts works correctly');
+        console.log('4. Check browser console for any issues');
+    </script>
+</body>
+</html> 

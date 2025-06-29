@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import Toast from '../../Toast';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function AdminDelivery() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -21,8 +25,14 @@ function AdminDelivery() {
   const completedDeliveries = deliveries.filter(d => d.status === 'completed').length;
 
   useEffect(() => {
-    fetchDeliveries();
-  }, []);
+    if (!authLoading && (!user || !user.isAdmin)) {
+      navigate('/login');
+      return;
+    }
+    if (!authLoading && user && user.isAdmin) {
+      fetchDeliveries();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchDeliveries = async () => {
     try {

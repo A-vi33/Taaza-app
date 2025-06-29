@@ -4,32 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../../../firebase';
 import { collection, getDocs, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, getDoc, query, orderBy } from 'firebase/firestore';
 import OrderDetailsModal from '../user/OrderDetailsModal';
-
-// Toast notification component
-function Toast({ message, show, onClose, type = 'success' }) {
-  return (
-    <div
-      className={`fixed top-6 right-6 z-50 transition-all duration-500 ${show ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'} ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-6 py-3 rounded shadow-lg flex items-center gap-2`}
-      style={{ pointerEvents: show ? 'auto' : 'none' }}
-    >
-      {type === 'success' ? (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-      ) : (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-      )}
-      <span>{message}</span>
-      <button className="ml-2 text-white/80 hover:text-white" onClick={onClose}>&times;</button>
-    </div>
-  );
-}
+import Toast from '../../Toast';
+import { sendOrderNotifications } from '../../../utils/notifications';
 
 function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterDate, setFilterDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
@@ -47,15 +28,16 @@ function AdminDashboard() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemWeight, setItemWeight] = useState(500);
+  const [loading, setLoading] = useState(true);
 
   // Add Razorpay payment integration
   const RAZORPAY_KEY_ID = 'rzp_test_Ty2fPZgb35aMIa';
 
   useEffect(() => {
-    if (!user || !user.isAdmin) {
+    if (!authLoading && (!user || !user.isAdmin)) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchOrders = async () => {
     try {
@@ -83,25 +65,24 @@ function AdminDashboard() {
 
   // Filter orders by search and date
   const filteredOrders = orders.filter(order => {
-    const matchesName = order.user?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchesDate = filterDate ? (order.createdAt?.toDate?.().toISOString().slice(0, 10) === filterDate) : true;
-    return matchesName && matchesDate;
+    return true; // Show all orders since we removed filtering
   });
 
   // Fetch products for admin to purchase
+  const fetchProducts = async () => {
+    try {
+      console.log('Fetching products...');
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('Products fetched:', productsData.length);
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setToast({ show: true, message: 'Error loading products', type: 'error' });
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        console.log('Fetching products...');
-        const querySnapshot = await getDocs(collection(db, 'products'));
-        const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log('Products fetched:', productsData.length);
-        setProducts(productsData);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setToast({ show: true, message: 'Error loading products', type: 'error' });
-      }
-    };
     fetchProducts();
   }, []);
 
@@ -185,10 +166,22 @@ function AdminDashboard() {
     });
   };
 
-  const sendSMS = async (phone, message) => {
-    // For now, we'll just log the SMS. In production, integrate with SMS service like Twilio
-    console.log(`SMS to ${phone}: ${message}`);
-    // You can integrate with Twilio, AWS SNS, or any SMS service here
+  const sendSMS = async (phone, message, orderId, transactionId, amount, items) => {
+    try {
+      // Use the new notification utility
+      await sendOrderNotifications(
+        phone, 
+        orderId, 
+        transactionId, 
+        amount, 
+        items, 
+        items[0]?.customerInfo?.name || 'Customer'
+      );
+      
+      console.log('Order notifications sent successfully');
+    } catch (error) {
+      console.error('Error sending notifications:', error);
+    }
   };
 
   const handleCheckout = async () => {
@@ -215,38 +208,50 @@ function AdminDashboard() {
         return;
       }
 
-      // Create a unique order ID for Razorpay (since we can't deploy backend)
-      const razorpayOrderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
       // Store order in Firestore first
       const orderRef = await addDoc(collection(db, 'orders'), {
         cart: cart,
         status: 'pending',
         createdAt: serverTimestamp(),
-        total: total,
-        razorpayOrderId: razorpayOrderId
+        total: total
       });
 
       setPendingOrderId(orderRef.id);
       setShowPaymentModal(true);
 
-      // Initialize Razorpay with the proper order ID
+      // Initialize Razorpay without order_id - let Razorpay generate it
       const options = {
         key: RAZORPAY_KEY_ID,
         amount: total * 100, // Razorpay expects amount in paise
         currency: 'INR',
         name: 'Taaza Non-Veg Market',
         description: 'Fresh Meat & Fish Purchase',
-        order_id: razorpayOrderId, // Use the generated Razorpay order ID
+        // Remove order_id - let Razorpay generate it
         handler: async function (response) {
           try {
-            // Update order with payment details
-            await updateDoc(doc(db, 'orders', orderRef.id), {
+            console.log('Razorpay response:', response);
+            
+            // Create update object with only defined values
+            const orderUpdate = {
               status: 'paid',
-              paymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpaySignature: response.razorpay_signature
-            });
+              paymentId: response.razorpay_payment_id
+            };
+            
+            // Only add Razorpay fields if they exist
+            if (response.razorpay_order_id) {
+              orderUpdate.razorpayOrderId = response.razorpay_order_id;
+            }
+            if (response.razorpay_payment_id) {
+              orderUpdate.razorpayPaymentId = response.razorpay_payment_id;
+            }
+            if (response.razorpay_signature) {
+              orderUpdate.razorpaySignature = response.razorpay_signature;
+            }
+            
+            console.log('Order update object:', orderUpdate);
+            
+            // Update order with payment details
+            await updateDoc(doc(db, 'orders', orderRef.id), orderUpdate);
 
             // Decrease product stock for each item in cart
             for (const item of cart) {
@@ -275,15 +280,26 @@ function AdminDashboard() {
             for (const item of cart) {
               if (item.customerInfo && item.customerInfo.phone) {
                 const smsMessage = `Thank you for your order! Order ID: ${orderRef.id}, Amount: ₹${item.price * item.quantity}, Items: ${item.name} (${item.weight}g). Payment ID: ${response.razorpay_payment_id}`;
-                await sendSMS(item.customerInfo.phone, smsMessage);
+                await sendSMS(item.customerInfo.phone, smsMessage, orderRef.id, response.razorpay_payment_id, total, cart);
               }
             }
 
             setToast({ show: true, message: 'Payment successful! Order placed and SMS sent.', type: 'success' });
             setShowPaymentModal(false);
             setCart([]);
-            fetchOrders(); // Refresh orders list
-            fetchProducts(); // Refresh products list to show updated stock
+            
+            // Refresh data with error handling
+            try {
+              await fetchOrders(); // Refresh orders list
+            } catch (error) {
+              console.error('Error refreshing orders:', error);
+            }
+            
+            try {
+              await fetchProducts(); // Refresh products list to show updated stock
+            } catch (error) {
+              console.error('Error refreshing products:', error);
+            }
 
           } catch (error) {
             console.error('Error processing payment:', error);
@@ -347,33 +363,6 @@ function AdminDashboard() {
           </div>
         </div>
         
-        {/* Search and Filter Section */}
-        <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
-          <h2 className="responsive-text-lg sm:responsive-text-xl font-bold mb-4 text-slate-800 flex items-center gap-2" 
-              style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
-              🔍
-            </div>
-            Search & Filter Orders
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              placeholder="Search by customer name..." 
-              className="responsive-btn border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            />
-            <input 
-              type="date" 
-              value={filterDate} 
-              onChange={e => setFilterDate(e.target.value)} 
-              className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            />
-          </div>
-        </div>
-       
         {/* Product Browsing Section */}
         <div className="mb-12 animate-fade-in-up">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
@@ -595,90 +584,7 @@ function AdminDashboard() {
         )}
 
         {/* Orders Section */}
-        <div className="animate-fade-in-up">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
-            <h2 className="responsive-text-2xl sm:responsive-text-3xl font-bold mb-6 text-slate-800 flex items-center gap-3" 
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 800
-                }}>
-              <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
-                📋
-              </div>
-              Recent Orders
-            </h2>
-          </div>
-          <div className="responsive-card responsive-p-6 bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
-            {orders.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-slate-600 responsive-text-lg font-medium" 
-                     style={{ fontFamily: 'Inter, sans-serif' }}>
-                  📭 No orders yet
-                </div>
-                <p className="text-slate-500 responsive-text-sm mt-2" 
-                   style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Orders will appear here once customers make purchases.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {orders.map(order => (
-                  <div key={order.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div className="flex-1">
-                        <h3 className="responsive-text-lg font-bold text-slate-900 mb-2" 
-                            style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          Order #{order.id.slice(-8)}
-                        </h3>
-                        <p className="responsive-text-sm text-slate-600 mb-1" 
-                           style={{ fontFamily: 'Inter, sans-serif' }}>
-                          Status: <span className={`font-semibold ${order.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
-                            {order.status === 'paid' ? '✅ Paid' : '⏳ Pending'}
-                          </span>
-                        </p>
-                        <p className="responsive-text-sm text-slate-600 mb-1" 
-                           style={{ fontFamily: 'Inter, sans-serif' }}>
-                          Total: ₹{order.cart?.reduce((sum, item) => sum + (item.price * item.quantity), 0)}
-                        </p>
-                        <p className="responsive-text-sm text-slate-600" 
-                           style={{ fontFamily: 'Inter, sans-serif' }}>
-                          Date: {order.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
-                        </p>
-                        {order.cart && order.cart.length > 0 && (
-                          <div className="mt-2">
-                            <p className="responsive-text-sm text-slate-600 mb-1" 
-                               style={{ fontFamily: 'Inter, sans-serif' }}>
-                              Items: {order.cart.map(item => `${item.name} (${item.weight}g)`).join(', ')}
-                            </p>
-                            {order.cart[0]?.customerInfo && (
-                              <p className="responsive-text-sm text-slate-700" 
-                                 style={{ fontFamily: 'Inter, sans-serif' }}>
-                                Customer: {order.cart[0].customerInfo.name} ({order.cart[0].customerInfo.phone})
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleFulfill(order.id, !order.fulfilled)}
-                          className={`responsive-btn font-semibold rounded-xl transition-all duration-300 touch-target ${
-                            order.fulfilled 
-                              ? 'bg-slate-500 hover:bg-slate-600 text-white' 
-                              : 'bg-slate-600 hover:bg-slate-700 text-white'
-                          }`}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
-                        >
-                          {order.fulfilled ? 'Mark Unfulfilled' : 'Mark Fulfilled'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* ... (Recent Orders section removed) */}
       </div>
 
       {/* Customer Details Modal */}

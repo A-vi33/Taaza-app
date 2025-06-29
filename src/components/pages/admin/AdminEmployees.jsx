@@ -17,7 +17,7 @@ import {
 import Toast from "../../Toast";
 
 function AdminEmployees() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -44,13 +44,15 @@ function AdminEmployees() {
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
 
   useEffect(() => {
-    if (!user || !user.isAdmin) {
+    if (!authLoading && (!user || !user.isAdmin)) {
       navigate("/login");
       return;
     }
-    fetchEmployees();
-    fetchLeaveRequests();
-  }, [user, navigate]);
+    if (!authLoading && user && user.isAdmin) {
+      fetchEmployees();
+      fetchLeaveRequests();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchEmployees = async () => {
     try {

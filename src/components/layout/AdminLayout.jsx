@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaUser, FaSearch, FaCaretDown } from 'react-icons/fa';
+import { FaTachometerAlt, FaDrumstickBite, FaUsersCog, FaClipboardList, FaTruck, FaCog, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaUser, FaSearch, FaCaretDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import bgImg from '../../assets/bg.jpg';
  
@@ -19,6 +19,7 @@ function AdminLayout({ children }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   
   const handleLogout = () => {
@@ -36,38 +37,54 @@ function AdminLayout({ children }) {
       )}
       
       {/* Left Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md shadow-2xl transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-50 bg-white/95 backdrop-blur-md shadow-2xl transform transition-all duration-300 ease-in-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      } ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-20 px-6 border-b border-slate-200 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 shadow-lg">
-          <h1 className="text-xl font-bold text-white flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+        <div className="flex items-center justify-between h-20 px-4 border-b border-slate-200 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 shadow-lg">
+          {!sidebarCollapsed && (
+            <h1 className="text-xl font-bold text-white flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                🏪
+              </div>
+              <span className="font-extrabold tracking-wide">Taaza Admin</span>
+            </h1>
+          )}
+          {sidebarCollapsed && (
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mx-auto">
               🏪
             </div>
-            <span className="font-extrabold tracking-wide">Taaza Admin</span>
-          </h1>
-          <button 
-            className="lg:hidden text-white hover:text-slate-200 transition-colors"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <FaTimes size={20} />
-          </button>
+          )}
+          <div className="flex items-center gap-2">
+            <button 
+              className="lg:hidden text-white hover:text-slate-200 transition-colors"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaTimes size={16} />
+            </button>
+            <button 
+              className="hidden lg:block text-white hover:text-slate-200 transition-colors"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+              {sidebarCollapsed ? <FaChevronRight size={16} /> : <FaChevronLeft size={16} />}
+            </button>
+          </div>
         </div>
         
         {/* Sidebar Navigation */}
-        <nav className="mt-6 px-4 h-[calc(100vh-120px)] overflow-y-auto">
+        <nav className="mt-6 px-2 h-[calc(100vh-120px)] overflow-y-auto">
           <div className="space-y-2">
           {adminLinks.map(link => (
             <Link
               key={link.to}
               to={link.to}
-                className={`flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-medium transition-all duration-300 group ${
+                className={`flex items-center gap-3 px-3 py-4 rounded-xl text-sm font-medium transition-all duration-300 group relative ${
                   location.pathname.startsWith(link.to) 
                     ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-lg scale-105 border-l-4 border-white' 
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-l-4 hover:border-slate-400 hover:scale-105'
-                }`}
+                } ${sidebarCollapsed ? 'justify-center' : ''}`}
                 onClick={() => setSidebarOpen(false)}
+                title={sidebarCollapsed ? link.label : ''}
               >
                 <span className={`text-lg transition-colors ${
                   location.pathname.startsWith(link.to) 
@@ -76,7 +93,15 @@ function AdminLayout({ children }) {
                 }`}>
                   {link.icon}
                 </span>
-                <span className="font-semibold">{link.label}</span>
+                {!sidebarCollapsed && (
+                  <span className="font-semibold">{link.label}</span>
+                )}
+                {/* Tooltip for collapsed state */}
+                {sidebarCollapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {link.label}
+                  </div>
+                )}
             </Link>
           ))}
           </div>
@@ -85,23 +110,36 @@ function AdminLayout({ children }) {
           <div className="mt-8 pt-6 border-t border-slate-200">
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-300 group hover:scale-105"
+              className={`w-full flex items-center gap-3 px-3 py-4 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-300 group hover:scale-105 relative ${
+                sidebarCollapsed ? 'justify-center' : ''
+              }`}
+              title={sidebarCollapsed ? 'Logout' : ''}
             >
               <span className="text-lg text-red-500 group-hover:text-red-600">
                 <FaSignOutAlt />
               </span>
-              <span className="font-semibold">Logout</span>
+              {!sidebarCollapsed && (
+                <span className="font-semibold">Logout</span>
+              )}
+              {/* Tooltip for collapsed state */}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-red-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  Logout
+                </div>
+              )}
             </button>
           </div>
         </nav>
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:ml-64">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+      }`}>
         {/* Professional Top Header Bar */}
         <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200 sticky top-0 z-30 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-6">
-            {/* Left Section - Mobile Menu & Search */}
+            {/* Left Section - Mobile Menu */}
             <div className="flex items-center gap-4">
               <button 
                 className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
@@ -109,16 +147,6 @@ function AdminLayout({ children }) {
               >
                 <FaBars size={20} />
               </button>
-              
-              {/* Search Bar */}
-              <div className="hidden md:flex items-center bg-slate-100 rounded-lg px-4 py-2 w-80">
-                <FaSearch className="text-slate-400 mr-3" size={14} />
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  className="bg-transparent border-none outline-none text-slate-700 placeholder-slate-400 w-full"
-                />
-              </div>
             </div>
             
             {/* Center Section - Page Title */}
@@ -128,7 +156,7 @@ function AdminLayout({ children }) {
               </h1>
             </div>
             
-            {/* Right Section - Notifications & User */}
+            {/* Right Section - User */}
             <div className="flex items-center gap-4">
               {/* User Menu */}
               <div className="relative">

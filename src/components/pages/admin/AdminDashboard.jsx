@@ -100,16 +100,16 @@ function AdminDashboard() {
   const handleWeightChange = (itemId, value) => {
     setItemWeight(parseInt(value) || 0);
   };
-  
+
   // NEW: Modified to create order immediately when item is added to cart
   const handleConfirmAddToCart = async (item) => {
     try {
-      const price = calculatePrice(item, itemWeight);
+    const price = calculatePrice(item, itemWeight);
       const cartItem = {
-        ...item,
-        weight: itemWeight,
-        price: parseFloat(price),
-        quantity: 1,
+      ...item,
+      weight: itemWeight,
+      price: parseFloat(price),
+      quantity: 1,
         customerInfo: { name: 'Walk-in Customer', phone: 'N/A', email: '' }
       };
 
@@ -131,23 +131,23 @@ function AdminDashboard() {
       });
 
       // Decrease product stock
-      const productRef = doc(db, 'products', item.id);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const currentQty = productSnap.data().quantity || 0;
+              const productRef = doc(db, 'products', item.id);
+              const productSnap = await getDoc(productRef);
+              if (productSnap.exists()) {
+                const currentQty = productSnap.data().quantity || 0;
         const boughtKg = (itemWeight || 0) / 1000;
-        let newQty = currentQty - boughtKg;
-        if (newQty < 0) newQty = 0;
-        await updateDoc(productRef, { quantity: newQty });
-      }
+                let newQty = currentQty - boughtKg;
+                if (newQty < 0) newQty = 0;
+                await updateDoc(productRef, { quantity: newQty });
+            }
 
-      // Add transaction record
-      await addDoc(collection(db, 'transactions'), {
-        orderId: orderRef.id,
+            // Add transaction record
+            await addDoc(collection(db, 'transactions'), {
+              orderId: orderRef.id,
         orderNumber: orderId,
         amount: price,
         items: [cartItem],
-        status: 'completed',
+              status: 'completed',
         paymentMethod: 'cash',
         createdAt: serverTimestamp(),
         customer: { name: 'Walk-in Customer', phone: 'N/A', email: '' }
@@ -358,68 +358,68 @@ function AdminDashboard() {
               ))
             )}
           </div>
-        </div>
+      </div>
 
-        {/* Customer Details Modal */}
-        {showCustomerForm && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
-              <h3 className="responsive-text-xl font-bold mb-4 text-slate-800" 
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      {/* Customer Details Modal */}
+      {showCustomerForm && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
+            <h3 className="responsive-text-xl font-bold mb-4 text-slate-800" 
+                style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 Create Order - {selectedItem.name}
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1" 
-                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                    Weight (g)
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={itemWeight}
-                      onChange={(e) => handleWeightChange(selectedItem.id, e.target.value)}
-                      className="flex-1 responsive-btn border-2 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200"
-                      placeholder="500"
-                      min="100"
-                      step="100"
-                    />
-                    <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" 
-                          style={{ fontFamily: 'Inter, sans-serif' }}>
-                      g
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-1" 
-                     style={{ fontFamily: 'Inter, sans-serif' }}>
-                    Price: ₹{calculatePrice(selectedItem, itemWeight)}
-                  </p>
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1" 
+                       style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Weight (g)
+                </label>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={itemWeight}
+                    onChange={(e) => handleWeightChange(selectedItem.id, e.target.value)}
+                    className="flex-1 responsive-btn border-2 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200"
+                    placeholder="500"
+                    min="100"
+                    step="100"
+                  />
+                  <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" 
+                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                    g
+                  </span>
                 </div>
-              </div>
-              
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowCustomerForm(false);
-                    setSelectedItem(null);
-                    setCustomerInfo({ name: '', phone: '', email: '' });
-                  }}
-                  className="flex-1 responsive-btn bg-slate-500 text-white hover:bg-slate-600 transition rounded-xl"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleConfirmAddToCart(selectedItem)}
-                  className="flex-1 responsive-btn bg-green-600 text-white hover:bg-green-700 transition rounded-xl"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                >
-                  🖨️ Create Order & Print
-                </button>
+                <p className="text-sm text-slate-500 mt-1" 
+                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Price: ₹{calculatePrice(selectedItem, itemWeight)}
+                </p>
               </div>
             </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCustomerForm(false);
+                  setSelectedItem(null);
+                  setCustomerInfo({ name: '', phone: '', email: '' });
+                }}
+                className="flex-1 responsive-btn bg-slate-500 text-white hover:bg-slate-600 transition rounded-xl"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleConfirmAddToCart(selectedItem)}
+                  className="flex-1 responsive-btn bg-green-600 text-white hover:bg-green-700 transition rounded-xl"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                  🖨️ Create Order & Print
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );

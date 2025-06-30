@@ -227,7 +227,7 @@ function RazorpayTest() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
+    <div className="relative main-content min-h-screen bg-green-100">
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
         <Toast 
           message={toast.message} 

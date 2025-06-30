@@ -105,11 +105,17 @@ function AdminProducts() {
   const handleEdit = p => {
     setForm({ name: p.name, category: p.category, price: p.price, image: p.imageUrl, quantity: p.quantity });
     setEditingId(p.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top to see the form
   };
 
   const handleDelete = async id => {
-    if (!window.confirm('Delete this product?')) return;
-    await deleteDoc(doc(db, 'products', id));
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      showToast("Product deleted successfully", "success");
+    } catch (err) {
+      showToast("Failed to delete product.", "error");
+    }
   };
 
   const handlePriceEdit = (id, price) => {
@@ -128,14 +134,14 @@ function AdminProducts() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
+    <div className="relative main-content min-h-screen bg-green-100">
       <Toast 
         message={toast.message} 
         show={toast.show} 
         onClose={() => setToast({ ...toast, show: false })} 
         type={toast.type} 
       />
-      <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
+      <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-7xl mx-auto">
         {/* Enhanced Page Header */}
         <div className="mb-8 pb-6 border-b border-white/20">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
@@ -163,12 +169,10 @@ function AdminProducts() {
           </div>
         </div>
         
+        {/* Add/Edit Form */}
         <form onSubmit={handleSubmit} className="mb-8 space-y-4 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-xl animate-fade-in-up border border-white/20">
-          <h3 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2" 
-              style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
-              🛠️
-            </div>
+          <h3 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">🛠️</div>
             Add/Edit Product
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -250,111 +254,61 @@ function AdminProducts() {
           </div>
         </form>
         
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-xl shadow-sm" 
-               style={{ fontFamily: 'Inter, sans-serif' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-xl shadow-sm">{error}</div>}
         
-        {/* Products List */}
+        {/* Products List Section */}
         <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-xl animate-fade-in-up border border-white/20">
-          <h3 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2" 
-              style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
-              📋
-            </div>
+          <h3 className="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">📋</div>
             Product Inventory
           </h3>
           {loading ? (
-            <div className="text-center py-8">
-              <div className="text-slate-600 responsive-text-lg font-medium" 
-                   style={{ fontFamily: 'Inter, sans-serif' }}>
-                🔄 Loading products...
-              </div>
-            </div>
+            <div className="text-center py-8"><div className="text-slate-600 responsive-text-lg font-medium">🔄 Loading products...</div></div>
           ) : products.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-slate-600 responsive-text-lg font-medium" 
-                   style={{ fontFamily: 'Inter, sans-serif' }}>
-                📦 No products available
-              </div>
-              <p className="text-slate-500 responsive-text-sm mt-2" 
-                 style={{ fontFamily: 'Inter, sans-serif' }}>
-                Add your first product using the form above.
-              </p>
+              <div className="text-slate-600 responsive-text-lg font-medium">📦 No products available</div>
+              <p className="text-slate-500 responsive-text-sm mt-2">Add your first product using the form above.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map(product => (
-                <div key={product.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={product.imageUrl} 
-                      alt={product.name} 
-                      className="w-16 h-16 object-cover rounded-xl border-2 border-slate-200 shadow-sm" 
-                    />
+                <div key={product.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden flex flex-col">
+                  <img src={product.imageUrl} alt={product.name} className="w-full h-48 object-cover" />
+                  
+                  <div className="p-4 flex flex-col flex-grow">
                     <div>
-                      <h4 className="font-bold text-slate-900 responsive-text-lg" 
-                          style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {product.name}
-                      </h4>
-                      <p className="text-slate-600 responsive-text-sm" 
-                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Category: {product.category}
+                      <h4 className="font-bold text-slate-900 responsive-text-lg mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{product.name}</h4>
+                      <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        Category: <span className="font-medium text-slate-700">{product.category}</span>
                       </p>
-                      <p className="text-slate-600 responsive-text-sm" 
-                         style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Stock: {product.quantity} kg
+                      <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        Stock: <span className="font-medium text-slate-700">{product.quantity} kg</span>
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {editingPriceId === product.id ? (
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="number" 
-                          value={newPrice} 
-                          onChange={(e) => setNewPrice(e.target.value)} 
-                          className="w-20 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                        />
-                        <button 
-                          onClick={() => handlePriceSave(product.id)} 
-                          className="bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 shadow-sm"
-                        >
-                          Save
-                        </button>
-                        <button 
-                          onClick={() => setEditingPriceId(null)} 
-                          className="bg-slate-400 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-500 shadow-sm"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="font-bold text-slate-700 responsive-text-lg" 
-                            style={{ fontFamily: 'Inter, sans-serif' }}>
-                        ₹{product.price}/kg
-                      </span>
-                    )}
-                    <button 
-                      onClick={() => handlePriceEdit(product.id, product.price)} 
-                      className="bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 transition shadow-sm"
-                    >
-                      Edit Price
-                    </button>
-                    <button 
-                      onClick={() => handleEdit(product)} 
-                      className="bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 transition shadow-sm"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(product.id)} 
-                      className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700 transition shadow-sm"
-                    >
-                      Delete
-                    </button>
+
+                    <div className="flex-grow" />
+
+                    <div className="mt-4">
+                      {editingPriceId === product.id ? (
+                        <div className="space-y-2">
+                          <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="New Price"/>
+                          <div className="flex gap-2">
+                            <button onClick={() => handlePriceSave(product.id)} className="flex-1 bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 shadow-sm">Save</button>
+                            <button onClick={() => setEditingPriceId(null)} className="flex-1 bg-slate-400 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-500 shadow-sm">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-slate-700 responsive-text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>₹{product.price}/kg</span>
+                          <button onClick={() => handlePriceEdit(product.id, product.price)} className="bg-slate-200 text-slate-800 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-slate-300 transition shadow-sm">Edit Price</button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2">
+                      <button onClick={() => handleEdit(product)} className="flex-1 bg-slate-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-700 transition shadow-sm font-semibold">Edit Details</button>
+                      <button onClick={() => handleDelete(product.id)} className="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-700 transition shadow-sm font-semibold">Delete</button>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -197,11 +197,10 @@ function AdminDashboard() {
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
+    <div className="relative main-content min-h-screen bg-green-100">
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-7xl mx-auto">
         <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} type={toast.type} />
         
-        {/* Enhanced Page Header */}
         <div className="mb-8 pb-6 border-b border-white/20">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -228,21 +227,16 @@ function AdminDashboard() {
           </div>
         </div>
         
-        {/* Product Browsing Section */}
         <div className="mb-12 animate-fade-in-up">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
             <h2 className="responsive-text-2xl sm:responsive-text-3xl font-bold mb-6 text-slate-800 flex items-center gap-3" 
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 800
-                }}>
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 800 }}>
               <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
                 🛒
               </div>
               Create Orders (Cash Payment)
             </h2>
             
-            {/* Category Filters */}
             <div className="flex flex-wrap gap-3 mb-6">
               {['all', 'chicken', 'mutton', 'goat'].map(cat => (
                 <button 
@@ -250,7 +244,7 @@ function AdminDashboard() {
                   className={`responsive-btn rounded-full transition-all duration-300 shadow-lg touch-target font-semibold ${
                     activeFilter === cat 
                       ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white scale-105 shadow-xl' 
-                      : 'bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-slate-800 border-2 border-slate-200 hover:border-slate-400'
+                      : 'bg-white/95 hover:bg-yellow-50 text-slate-700 hover:text-slate-800 border-2 border-slate-200 hover:border-slate-400'
                   }`} 
                   onClick={() => handleFilterClick(cat)}
                   style={{ fontFamily: 'Inter, sans-serif' }}
@@ -261,36 +255,30 @@ function AdminDashboard() {
             </div>
           </div>
           
-          {/* Products Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.length === 0 ? (
               <div className="col-span-full text-center py-12 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20">
-                <div className="text-slate-600 responsive-text-lg font-medium" 
-                     style={{ fontFamily: 'Inter, sans-serif' }}>
+                <div className="text-slate-600 responsive-text-lg font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
                   {loading ? '🔄 Loading products...' : '📦 No products available'}
                 </div>
                 {!loading && (
-                  <p className="text-slate-500 responsive-text-sm mt-2" 
-                     style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <p className="text-slate-500 responsive-text-sm mt-2" style={{ fontFamily: 'Inter, sans-serif' }}>
                     Products will appear here once added to the database.
                   </p>
                 )}
               </div>
             ) : (
               getFilteredItems().map(item => (
-                <div key={item.id} className="group relative bg-white/95 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden">
-                  {/* Product Image Container */}
-                  <div className="relative h-48 bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+                <div key={item.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden">
+                  <div className="relative h-48 bg-gradient-to-br from-yellow-100 to-yellow-200 p-4">
                     <img 
                       src={item.imageUrl} 
                       alt={item.name} 
                       className="w-full h-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-110" 
                     />
-                    {/* Category Badge */}
                     <div className="absolute top-3 left-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg">
                       {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </div>
-                    {/* Stock Status Badge */}
                     <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold ${
                       (item.quantity || 0) > 10 ? 'bg-green-100 text-green-800' : 
                       (item.quantity || 0) > 0 ? 'bg-yellow-100 text-yellow-800' : 
@@ -300,30 +288,23 @@ function AdminDashboard() {
                     </div>
                   </div>
                   
-                  {/* Product Info */}
                   <div className="p-6">
-                    {/* Product Name */}
-                    <h3 className="font-bold mb-3 text-lg text-slate-800 leading-tight group-hover:text-slate-900 transition-colors" 
-                        style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <h3 className="font-bold mb-3 text-lg text-slate-800 leading-tight group-hover:text-slate-900 transition-colors" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                       {item.name}
                     </h3>
                     
-                    {/* Price and Stock Info */}
                     <div className="space-y-3 mb-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-slate-700" 
-                              style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <span className="text-2xl font-bold text-slate-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                           ₹{item.price}
                         </span>
-                        <span className="text-sm text-slate-500 font-medium" 
-                              style={{ fontFamily: 'Inter, sans-serif' }}>
+                        <span className="text-sm text-slate-500 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
                           per kg
                         </span>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600 font-medium" 
-                              style={{ fontFamily: 'Inter, sans-serif' }}>
+                        <span className="text-sm text-slate-600 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
                           📦 Available:
                         </span>
                         <span className={`text-sm font-bold ${
@@ -337,7 +318,6 @@ function AdminDashboard() {
                       </div>
                     </div>
                     
-                    {/* Action Button */}
                     <button 
                       onClick={() => handleAddToCartClick(item)}
                       disabled={(item.quantity || 0) <= 0}
@@ -352,7 +332,6 @@ function AdminDashboard() {
                     </button>
                   </div>
                   
-                  {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               ))
@@ -360,19 +339,16 @@ function AdminDashboard() {
           </div>
       </div>
 
-      {/* Customer Details Modal */}
       {showCustomerForm && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
-            <h3 className="responsive-text-xl font-bold mb-4 text-slate-800" 
-                style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <h3 className="responsive-text-xl font-bold mb-4 text-slate-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 Create Order - {selectedItem.name}
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1" 
-                       style={{ fontFamily: 'Inter, sans-serif' }}>
+                <label className="block text-sm font-medium text-slate-700 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
                   Weight (g)
                 </label>
                 <div className="flex items-center">
@@ -385,13 +361,11 @@ function AdminDashboard() {
                     min="100"
                     step="100"
                   />
-                  <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" 
-                        style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" style={{ fontFamily: 'Inter, sans-serif' }}>
                     g
                   </span>
                 </div>
-                <p className="text-sm text-slate-500 mt-1" 
-                   style={{ fontFamily: 'Inter, sans-serif' }}>
+                <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
                   Price: ₹{calculatePrice(selectedItem, itemWeight)}
                 </p>
               </div>
@@ -414,7 +388,7 @@ function AdminDashboard() {
                   className="flex-1 responsive-btn bg-green-600 text-white hover:bg-green-700 transition rounded-xl"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                  🖨️ Create Order & Print
+                  🖨 Create Order & Print
               </button>
             </div>
           </div>

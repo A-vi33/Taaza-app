@@ -7,14 +7,14 @@ import bgImg from '../../../assets/bg.jpg'; // This import is essential for the 
 
 // --- DEFINITIVE, ILLUSTRATIVE & RECOGNIZABLE ICONS ---
 const AllIcon = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 21h8v-8h-8v8zm6-6h-4v4h4v-4z" />
   </svg>
 );
 
 // Advanced Chicken Icon with detailed features and gradients
 const ChickenIcon = (props) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     {/* Chicken body with gradient */}
     <ellipse cx="12" cy="14" rx="8" ry="6" fill="url(#chickenBody)" stroke="#E65100" strokeWidth="0.8"/>
     
@@ -79,7 +79,7 @@ const ChickenIcon = (props) => (
 
 // Advanced Mutton/Lamb Icon with wool texture and realistic features
 const MuttonIcon = (props) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     {/* Lamb body with wool texture */}
     <ellipse cx="12" cy="15" rx="7" ry="5" fill="url(#woolBody)" stroke="#E0E0E0" strokeWidth="0.8"/>
     
@@ -164,7 +164,7 @@ const MuttonIcon = (props) => (
 
 // Advanced Goat Icon with realistic features and textures
 const GoatIcon = (props) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
     {/* Goat body with fur texture */}
     <ellipse cx="12" cy="15" rx="7" ry="5" fill="url(#goatBody)" stroke="#6D4C41" strokeWidth="0.8"/>
     
@@ -266,6 +266,7 @@ const GoatIcon = (props) => (
   </svg>
 );
 
+// ▼▼▼ PRODUCT CARD HAS BEEN SIGNIFICANTLY MODIFIED FOR RESPONSIVE SIZE ▼▼▼
 function ProductCard({ item, onAddToCart }) {
   const [weight, setWeight] = useState('');
   const [showWeightInput, setShowWeightInput] = useState(false);
@@ -296,28 +297,34 @@ function ProductCard({ item, onAddToCart }) {
     setShowWeightInput(false);
   };
   return (
-    <article className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-slate-200/50">
+    <article className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-slate-200/50 h-full">
       <img
         src={item.imageUrl || 'https://via.placeholder.com/400x300'}
         alt={item.name}
-        className="w-full h-48 object-cover"
+        className="w-full h-28 sm:h-48 object-cover" // Responsive image height
       />
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-lg font-bold text-slate-800">{item.name}</h3>
-        <p className="text-sm text-slate-500 mt-1 flex-grow">{item.description}</p>
-        <p className="text-2xl font-extrabold text-red-600 mt-4">
-          ₹{item.price}<span className="text-sm font-medium text-slate-500">/kg</span>
+      <div className="p-2 sm:p-4 flex flex-col flex-grow"> {/* Responsive padding */}
+        <h3 className="text-sm sm:text-lg font-bold text-slate-800 min-h-[40px] sm:min-h-[56px]">{item.name}</h3> {/* Responsive text and min-height */}
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">{item.description}</p>
+        <div className="flex-grow" />
+        <p className="text-lg sm:text-2xl font-extrabold text-red-600 mt-2 sm:mt-4"> {/* Responsive text and margin */}
+          ₹{item.price}<span className="text-xs sm:text-sm font-medium text-slate-500">/kg</span>
         </p>
-        <div className="mt-4">
+        <div className="mt-2 sm:mt-4"> {/* Responsive margin */}
           {!showWeightInput ? (
-            <button onClick={handleShowInput} className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
-              Add to Cart
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleShowInput} className="flex-1 bg-green-500 text-white font-bold py-2 px-3 text-sm sm:py-3 sm:px-4 rounded-lg hover:bg-green-600 transition-colors duration-300">
+                Add to Cart
+              </button>
+              <Link to="/cart" className="flex-1 text-center bg-slate-200 text-slate-800 font-bold py-2 px-3 text-sm sm:py-3 sm:px-4 rounded-lg hover:bg-slate-300 transition-colors duration-300">
+                Cart
+              </Link>
+            </div>
           ) : (
-            <div className="space-y-3 p-2 bg-slate-50 rounded-lg">
+            <div className="space-y-2 p-2 bg-slate-50 rounded-lg">
               <div className="flex items-center justify-between">
-                <label htmlFor={`weight-${item.id}`} className="font-semibold text-slate-600 text-sm">Weight (g)</label>
-                <span className="font-bold text-lg text-red-600">₹{calculatedPrice}</span>
+                <label htmlFor={`weight-${item.id}`} className="font-semibold text-slate-600 text-xs sm:text-sm">Weight (g)</label>
+                <span className="font-bold text-base sm:text-lg text-red-600">₹{calculatedPrice}</span>
               </div>
               <input
                 id={`weight-${item.id}`}
@@ -327,16 +334,13 @@ function ProductCard({ item, onAddToCart }) {
                 min={50} max={20000} step={50}
                 value={weight}
                 onChange={handleWeightChange}
-                placeholder="Enter grams (min 50)"
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                placeholder="Grams"
+                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
               />
               <div className="flex items-center gap-2">
-                <button onClick={handleConfirm} className="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">
-                  Confirm & Add
+                <button onClick={handleConfirm} className="flex-1 bg-green-600 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-700">
+                  Confirm
                 </button>
-                <Link to="/cart" className="flex-1 text-center bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors duration-300">
-                  Go to Cart
-                </Link>
               </div>
             </div>
           )}
@@ -448,14 +452,14 @@ function Home(props) {
             return (
               <button
                 key={filter.key}
-                className={`filter-button inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-all duration-300 border-2 text-sm md:text-base ${
+                className={`filter-button inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold transition-all duration-300 border-2 text-sm ${
                   activeFilter === filter.key
                     ? 'active bg-red-600 text-white border-red-600 shadow-md'
                     : 'bg-white text-slate-700 border-slate-300 hover:bg-red-50 hover:border-red-400'
                 }`}
                 onClick={() => setActiveFilter(filter.key)}
               >
-                <IconComponent className="h-6 w-6" />
+                <IconComponent className="h-5 w-5" />
                 <span>{filter.label}</span>
               </button>
             );
@@ -464,10 +468,8 @@ function Home(props) {
        
         <div className="space-y-12">
           {Object.entries(groupedProducts).map(([category, items]) => {
-            const isGrid = items.length > 4;
-            const containerClasses = isGrid
-              ? "grid grid-rows-2 grid-flow-col gap-x-8 gap-y-6 overflow-x-auto pb-6"
-              : "flex flex-row overflow-x-auto gap-4 py-4";
+            // ▼▼▼ FIX: Replaced flex slider with a responsive grid ▼▼▼
+            const containerClasses = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4";
 
             return (
               <section key={category} aria-labelledby={`${category}-heading`}>
@@ -476,9 +478,8 @@ function Home(props) {
                 </h2>
                 <div className={containerClasses}>
                   {items.map(item => (
-                    <div key={item.id} className="w-[280px] sm:w-[320px] flex-shrink-0">
-                      <ProductCard item={item} onAddToCart={handleAddToCart} />
-                    </div>
+                    // Removed the wrapper div, the grid now controls layout
+                    <ProductCard key={item.id} item={item} onAddToCart={handleAddToCart} />
                   ))}
                 </div>
               </section>

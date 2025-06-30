@@ -207,7 +207,9 @@ function AdminLayout({ children }) {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
           <div className="responsive-p-4 sm:responsive-p-6 lg:responsive-p-8">
-            {children || <Outlet />}
+            <div className="main-content min-h-screen bg-green-100">
+              {children || <Outlet />}
+            </div>
           </div>
         </main>
       </div>

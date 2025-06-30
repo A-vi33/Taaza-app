@@ -120,7 +120,7 @@ function AdminDelivery() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
+    <div className="relative main-content min-h-screen bg-green-100">
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
         <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} type={toast.type} />
         
@@ -152,12 +152,9 @@ function AdminDelivery() {
         </div>
         
         {/* Delivery Form */}
-        <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-8 animate-fade-in">
           <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-4 text-slate-800 flex items-center gap-2" 
               style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
-              📝
-            </div>
             Add/Edit Delivery
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -270,7 +267,7 @@ function AdminDelivery() {
           ) : (
             <div className="space-y-4">
               {deliveries.map(delivery => (
-                <div key={delivery.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
+                <div key={delivery.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden p-4">
                   <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">

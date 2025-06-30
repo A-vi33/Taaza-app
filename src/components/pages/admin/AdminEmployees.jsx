@@ -377,7 +377,7 @@ function AdminEmployees() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-white">
+    <div className="relative main-content min-h-screen bg-green-100">
       <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
@@ -447,7 +447,7 @@ function AdminEmployees() {
         {activeTab === "employees" && (
           <>
             {/* Employee Form */}
-            <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-8 animate-fade-in">
               <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
                 <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
                   ➕
@@ -556,7 +556,7 @@ function AdminEmployees() {
                     const balanceDue = (employee.salary || 0) - paymentsThisMonth;
 
                     return (
-                      <div key={employee.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
+                      <div key={employee.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden p-4">
                         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
@@ -634,7 +634,7 @@ function AdminEmployees() {
         {activeTab === "leaves" && (
           <>
             {/* Leave Request Form */}
-            <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-8 animate-fade-in">
               <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
                 <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
                   📝
@@ -736,7 +736,7 @@ function AdminEmployees() {
               ) : (
                 <div className="space-y-4">
                   {leaveRequests.map(leave => (
-                    <div key={leave.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
+                    <div key={leave.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden p-4">
                       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">

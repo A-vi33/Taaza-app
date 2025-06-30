@@ -18,7 +18,7 @@ function Toast({ message, show, onClose, type = 'success' }) {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
       )}
       <span>{message}</span>
-      <button className="ml-2 text-white/80 hover:text-white" onClick={onClose}>&times;</button>
+      <button className="ml-2 text-white/80 hover:text-white" onClick={onClose}>×</button>
     </div>
   );
 }
@@ -113,7 +113,7 @@ function AdminOrders() {
   };
 
   return (
-    <div className="relative main-content min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="relative main-content min-h-screen bg-green-100">
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-7xl mx-auto">
         <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} type={toast.type} />
         
@@ -130,7 +130,7 @@ function AdminOrders() {
                 </p>
                 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="text-2xl font-bold text-blue-600">{orders.length}</div>
                     <div className="text-sm text-blue-700 font-medium">Total Orders</div>
@@ -144,12 +144,6 @@ function AdminOrders() {
                       {orders.filter(o => o.status === 'paid' || o.status === 'confirmed').length}
                     </div>
                     <div className="text-sm text-green-700 font-medium">Active</div>
-                  </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {orders.filter(o => o.fulfilled).length}
-                    </div>
-                    <div className="text-sm text-purple-700 font-medium">Fulfilled</div>
                   </div>
                 </div>
               </div>
@@ -172,7 +166,7 @@ function AdminOrders() {
         </div>
         
         {/* Enhanced Filters Section */}
-        <div className="responsive-card responsive-p-6 mb-8 animate-fade-in bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-8 animate-fade-in">
           <h3 className="responsive-text-lg sm:responsive-text-xl font-bold mb-6 text-slate-800 flex items-center gap-2" 
               style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center text-white text-sm">
@@ -206,7 +200,6 @@ function AdminOrders() {
                 <option value="pending">⏳ Pending</option>
                 <option value="confirmed">🏪 Confirmed (Offline)</option>
                 <option value="paid">✅ Paid</option>
-                <option value="fulfilled">📦 Fulfilled</option>
                 <option value="cancelled">❌ Cancelled</option>
               </select>
             </div>
@@ -326,7 +319,7 @@ function AdminOrders() {
                 const isExpanded = expandedOrder === order.id;
                 
                 return (
-                  <div key={order.id} className="bg-white rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  <div key={order.id} className="group relative bg-yellow-100 backdrop-blur-md border-2 border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden">
                     {/* Order Header */}
                     <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -347,17 +340,14 @@ function AdminOrders() {
                             ? 'bg-green-100 text-green-800' 
                             : order.status === 'pending' 
                             ? 'bg-yellow-100 text-yellow-800' 
-                                  : order.status === 'confirmed'
-                                  ? 'bg-blue-100 text-blue-800'
-                            : order.status === 'fulfilled' 
-                            ? 'bg-blue-100 text-blue-800' 
+                            : order.status === 'confirmed'
+                            ? 'bg-blue-100 text-blue-800'
                             : 'bg-red-100 text-red-800'
                         }`} 
                         style={{ fontFamily: 'Inter, sans-serif' }}>
                                 {order.status === 'paid' ? '✅ Paid' : 
                                  order.status === 'pending' ? '⏳ Pending' : 
-                                 order.status === 'confirmed' ? '🏪 Offline' :
-                                 order.status === 'fulfilled' ? '📦 Fulfilled' : '❌ Cancelled'}
+                                 order.status === 'confirmed' ? '🏪 Offline' : '❌ Cancelled'}
                               </span>
                               
                               {order.source && (

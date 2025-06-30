@@ -7,6 +7,13 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { sendOrderNotifications } from '../../../utils/notifications';
 import { generateOrderId } from '../../../utils/orderUtils';
 
+// ▼▼▼ NEW ICON COMPONENT ▼▼▼
+const TrashIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  </svg>
+);
+
 function Cart(props) {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -149,30 +156,16 @@ function Cart(props) {
         // Remove order_id - let Razorpay generate it
         handler: async function (response) {
           console.log('Razorpay response:', response);
-          
           const paymentId = response.razorpay_payment_id;
-          
-          // Create update object with only defined values
           const orderUpdate = {
             paymentId,
             status: 'paid'
           };
-          
-          // Only add Razorpay fields if they exist
-          if (response.razorpay_order_id) {
-            orderUpdate.razorpayOrderId = response.razorpay_order_id;
-          }
-          if (response.razorpay_payment_id) {
-            orderUpdate.razorpayPaymentId = response.razorpay_payment_id;
-          }
-          if (response.razorpay_signature) {
-            orderUpdate.razorpaySignature = response.razorpay_signature;
-          }
-          
+          if (response.razorpay_order_id) orderUpdate.razorpayOrderId = response.razorpay_order_id;
+          if (response.razorpay_payment_id) orderUpdate.razorpayPaymentId = response.razorpay_payment_id;
+          if (response.razorpay_signature) orderUpdate.razorpaySignature = response.razorpay_signature;
           console.log('Order update object:', orderUpdate);
-          
           try {
-            // Save transaction
             await addDoc(collection(db, 'transactions'), {
               orderId: orderRef.id,
               orderNumber: orderId,
@@ -185,122 +178,106 @@ function Cart(props) {
               user: user?.name || user?.email || 'Customer',
               cart: cartItems
             });
-            
-            // Update order with paymentId and status
             await updateDoc(doc(db, 'orders', orderRef.id), orderUpdate);
-            
-            // Generate e-bill HTML
-            const billHtml = `
-              <div style='font-family:sans-serif;padding:24px;'>
-                <h2 style='color:#27ae60;'>Tazza Chicken - E-Bill</h2>
-                <p><strong>Name:</strong> ${user?.name}</p>
-                <p><strong>Phone:</strong> ${user?.mobile}</p>
-                <p><strong>Email:</strong> ${user?.email || ''}</p>
-                <p><strong>Order ID:</strong> ${orderId}</p>
-                <p><strong>Transaction ID:</strong> ${paymentId}</p>
-                <table border='1' cellpadding='8' cellspacing='0' style='margin-top:16px;width:100%;'>
-                  <thead><tr><th>Item</th><th>Weight</th><th>Qty</th><th>Price</th></tr></thead>
-                  <tbody>
-                    ${cartItems.map(item => `<tr><td>${item.name}</td><td>${item.weight}g</td><td>${item.quantity}</td><td>₹${item.price * item.quantity}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-                <p style='margin-top:16px;'><strong>Total:</strong> ₹${total}</p>
-                <p style='margin-top:8px;'>Thank you for ordering from Tazza Chicken!</p>
-              </div>
-            `;
-            
-            // Generate PDF using blob URL (primary method - no CORS issues)
-            let billUrl = null;
-            try {
-              // Convert HTML to PDF (html2pdf.js)
-              const pdfBlob = await new Promise((resolve, reject) => {
-                const iframe = document.createElement('iframe');
-                document.body.appendChild(iframe);
-                const docu = iframe.contentWindow.document;
-                docu.open();
-                docu.write(billHtml);
-                docu.close();
-                iframe.onload = () => {
-                  window.html2pdf()
-                    .from(iframe.contentWindow.document.body)
-                    .outputPdf('blob')
-                    .then(blob => {
-                      document.body.removeChild(iframe);
-                      resolve(blob);
-                    })
-                    .catch(err => {
-                      document.body.removeChild(iframe);
-                      reject(err);
-                    });
-                };
-              });
-              
-              // Create blob URL for immediate download (no CORS issues)
-              billUrl = URL.createObjectURL(pdfBlob);
-              
-              // Store blob URL in order (primary method)
-              await updateDoc(doc(db, 'orders', orderRef.id), { 
-                billUrl: billUrl,
-                billType: 'blob',
-                billGenerated: true,
-                billBlobData: {
-                  url: billUrl,
-                  cleanup: true // Mark for cleanup
-                }
-              });
-              
-              console.log('E-Bill generated successfully using blob URL');
-              
-              // Store cleanup function in localStorage for later cleanup
-              const cleanupKey = `bill_cleanup_${orderRef.id}`;
-              localStorage.setItem(cleanupKey, 'true');
-              
-              // Optionally try Firebase Storage in background (non-blocking)
-              setTimeout(async () => {
-                try {
-                  const billRef = ref(storage, `bills/${orderRef.id}.pdf`);
-                  await uploadBytes(billRef, pdfBlob, { contentType: 'application/pdf' });
-                  const firebaseUrl = await getDownloadURL(billRef);
-                  // Update order with Firebase URL if successful
-                  await updateDoc(doc(db, 'orders', orderRef.id), { 
-                    firebaseBillUrl: firebaseUrl,
-                    billType: 'firebase'
-                  });
-                  console.log('E-Bill uploaded to Firebase successfully (background)');
-                } catch (firebaseError) {
-                  console.log('Firebase upload failed (background), using blob URL:', firebaseError.message);
-                }
-              }, 1000); // Run in background after 1 second
-              
-            } catch (pdfError) {
-              console.error('Error generating PDF:', pdfError);
-              // Continue without PDF - order is still valid
-            }
-            
-            // Decrease product stock for each item in cart
-            for (const item of cartItems) {
-              const productRef = doc(db, 'products', item.id);
-              const productSnap = await getDoc(productRef);
-              if (productSnap.exists()) {
-                const currentQty = productSnap.data().quantity || 0;
-                const boughtKg = (item.weight || 0) / 1000;
-                let newQty = currentQty - boughtKg;
-                if (newQty < 0) newQty = 0;
-                await updateDoc(productRef, { quantity: newQty });
-              }
-            }
-            
-            // Send SMS receipt to customer
-            if (user?.mobile) {
-              const smsMessage = `Thank you for your order! Order ID: ${orderId}, Amount: ₹${total}, Items: ${cartItems.map(item => `${item.name} (${item.weight}g)`).join(', ')}. Payment ID: ${paymentId}`;
-              await sendSMS(user.mobile, smsMessage, orderId, paymentId);
-            }
-            
-            // Clear cart and redirect
+            // Clear cart and redirect IMMEDIATELY
             setCartItems([]);
             localStorage.removeItem('taazaCart');
             navigate(`/order-confirmation?orderId=${orderId}`);
-            
+            // Defer all non-blocking post-processing
+            setTimeout(async () => {
+              try {
+                // Generate e-bill HTML
+                const billHtml = `
+                  <div style='font-family:sans-serif;padding:24px;'>
+                    <h2 style='color:#27ae60;'>Tazza Chicken - E-Bill</h2>
+                    <p><strong>Name:</strong> ${user?.name}</p>
+                    <p><strong>Phone:</strong> ${user?.mobile}</p>
+                    <p><strong>Email:</strong> ${user?.email || ''}</p>
+                    <p><strong>Order ID:</strong> ${orderId}</p>
+                    <p><strong>Transaction ID:</strong> ${paymentId}</p>
+                    <table border='1' cellpadding='8' cellspacing='0' style='margin-top:16px;width:100%;'>
+                      <thead><tr><th>Item</th><th>Weight</th><th>Qty</th><th>Price</th></tr></thead>
+                      <tbody>
+                        ${cartItems.map(item => `<tr><td>${item.name}</td><td>${item.weight}g</td><td>${item.quantity}</td><td>₹${item.price * item.quantity}</td></tr>`).join('')}
+                      </tbody>
+                    </table>
+                    <p style='margin-top:16px;'><strong>Total:</strong> ₹${total}</p>
+                    <p style='margin-top:8px;'>Thank you for ordering from Tazza Chicken!</p>
+                  </div>
+                `;
+                // Generate PDF using blob URL (primary method - no CORS issues)
+                let billUrl = null;
+                try {
+                  const pdfBlob = await new Promise((resolve, reject) => {
+                    const iframe = document.createElement('iframe');
+                    document.body.appendChild(iframe);
+                    const docu = iframe.contentWindow.document;
+                    docu.open();
+                    docu.write(billHtml);
+                    docu.close();
+                    iframe.onload = () => {
+                      window.html2pdf()
+                        .from(iframe.contentWindow.document.body)
+                        .outputPdf('blob')
+                        .then(blob => {
+                          document.body.removeChild(iframe);
+                          resolve(blob);
+                        })
+                        .catch(err => {
+                          document.body.removeChild(iframe);
+                          reject(err);
+                        });
+                    };
+                  });
+                  billUrl = URL.createObjectURL(pdfBlob);
+                  await updateDoc(doc(db, 'orders', orderRef.id), { 
+                    billUrl: billUrl,
+                    billType: 'blob',
+                    billGenerated: true,
+                    billBlobData: {
+                      url: billUrl,
+                      cleanup: true
+                    }
+                  });
+                  const cleanupKey = `bill_cleanup_${orderRef.id}`;
+                  localStorage.setItem(cleanupKey, 'true');
+                  setTimeout(async () => {
+                    try {
+                      const billRef = ref(storage, `bills/${orderRef.id}.pdf`);
+                      await uploadBytes(billRef, pdfBlob, { contentType: 'application/pdf' });
+                      const firebaseUrl = await getDownloadURL(billRef);
+                      await updateDoc(doc(db, 'orders', orderRef.id), { 
+                        firebaseBillUrl: firebaseUrl,
+                        billType: 'firebase'
+                      });
+                    } catch (firebaseError) {
+                      console.log('Firebase upload failed (background), using blob URL:', firebaseError.message);
+                    }
+                  }, 1000);
+                } catch (pdfError) {
+                  console.error('Error generating PDF:', pdfError);
+                }
+                // Decrease product stock for each item in cart
+                for (const item of cartItems) {
+                  const productRef = doc(db, 'products', item.id);
+                  const productSnap = await getDoc(productRef);
+                  if (productSnap.exists()) {
+                    const currentQty = productSnap.data().quantity || 0;
+                    const boughtKg = (item.weight || 0) / 1000;
+                    let newQty = currentQty - boughtKg;
+                    if (newQty < 0) newQty = 0;
+                    await updateDoc(productRef, { quantity: newQty });
+                  }
+                }
+                // Send SMS receipt to customer
+                if (user?.mobile) {
+                  const smsMessage = `Thank you for your order! Order ID: ${orderId}, Amount: ₹${total}, Items: ${cartItems.map(item => `${item.name} (${item.weight}g)`).join(', ')}. Payment ID: ${paymentId}`;
+                  await sendSMS(user.mobile, smsMessage, orderId, paymentId);
+                }
+              } catch (error) {
+                console.error('Error in post-payment processing:', error);
+              }
+            }, 0);
           } catch (error) {
             console.error('Error processing payment:', error);
             alert('Error processing payment: ' + error.message);
@@ -388,11 +365,12 @@ function Cart(props) {
                       </button>
                     
                       <button 
-                    className="px-3 py-1 text-xs font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition ml-2 sm:ml-4 touch-target" 
+                    className="w-8 h-8 flex items-center justify-center text-white bg-red-600 rounded-full hover:bg-red-700 transition ml-auto touch-target" 
                         onClick={() => removeItem(item.id, item.weight)}
+                        aria-label="Remove item"
                       >
-                    Remove
-                      </button>
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>

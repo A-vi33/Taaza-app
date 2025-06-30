@@ -333,12 +333,12 @@ function Cart(props) {
         
         <div className="space-y-4 mb-6">
           {cartItems.map(item => (
-            <div key={item.id + '-' + item.weight} className="bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-md">
+            <div key={item.id + '-' + item.weight} className="bg-gray-800 p-4 rounded-lg flex flex-row items-center gap-4 shadow-md">
                   <img 
                     src={item.imageUrl} 
                     alt={item.name} 
-                className="w-full sm:w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
-              />
+                    className="w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
+                  />
                 <div className="flex-1 min-w-0">
                 <h3 className="responsive-text-lg font-bold text-white mb-2">{item.name}</h3>
                 <p className="responsive-text-sm text-gray-300 mb-2">{item.weight}g</p>

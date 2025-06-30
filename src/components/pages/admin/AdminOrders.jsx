@@ -86,26 +86,8 @@ function AdminOrders() {
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
   };
 
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-  };
-
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const handleFulfill = async (orderId, fulfilled) => {
-    try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        fulfilled: fulfilled,
-        fulfilledAt: fulfilled ? new Date() : null
-      });
-      showToast(`Order ${fulfilled ? 'marked as fulfilled' : 'marked as unfulfilled'}`);
-      fetchOrders(); // Refresh orders
-    } catch (error) {
-      console.error('Error updating order:', error);
-      showToast('Error updating order', 'error');
-    }
   };
 
   const confirmDeleteOrder = (order) => {
@@ -141,9 +123,6 @@ function AdminOrders() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="flex-1">
                 <h2 className="responsive-text-3xl sm:responsive-text-4xl font-bold text-slate-800 mb-3 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
-                    📋
-                  </div>
                   Order Management System
                 </h2>
                 <p className="text-slate-600 responsive-text-base sm:responsive-text-lg font-medium mb-4">
@@ -389,13 +368,6 @@ function AdminOrders() {
                                   {order.source === 'admin' ? '🏪 Admin' : '🌐 Online'}
                         </span>
                               )}
-                              
-                        {order.fulfilled && (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800" 
-                                style={{ fontFamily: 'Inter, sans-serif' }}>
-                            ✅ Fulfilled
-                          </span>
-                        )}
                             </div>
                       </div>
                       
@@ -453,49 +425,25 @@ function AdminOrders() {
                         
                         {/* Action Buttons */}
                         <div className="flex flex-col gap-2 min-w-fit">
-                          <button 
-                            onClick={() => toggleOrderDetails(order.id)} 
-                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition shadow-sm font-semibold flex items-center gap-2" 
-                            style={{ fontFamily: 'Inter, sans-serif' }}
-                          >
-                            {expandedOrder === order.id ? '📋 Hide Details' : '📋 Show Details'}
-                          </button>
-                          
-                      <button 
-                        onClick={() => handleViewDetails(order)} 
-                            className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold flex items-center gap-2" 
-                        style={{ fontFamily: 'Inter, sans-serif' }}
-                      >
-                            👁️ Full View
-                      </button>
-                          
-                          {(order.status === 'paid' || order.status === 'confirmed') && !order.fulfilled && (
-                        <button 
-                          onClick={() => handleFulfill(order.id, true)} 
-                              className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition shadow-sm font-semibold flex items-center gap-2" 
-                          style={{ fontFamily: 'Inter, sans-serif' }}
-                        >
-                              ✅ Mark Fulfilled
-                        </button>
-                      )}
-                          
-                      {order.fulfilled && (
-                        <button 
-                          onClick={() => handleFulfill(order.id, false)} 
-                              className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-yellow-700 transition shadow-sm font-semibold flex items-center gap-2" 
-                          style={{ fontFamily: 'Inter, sans-serif' }}
-                        >
-                              🔄 Mark Unfulfilled
-                        </button>
-                      )}
-                          
-                      <button
-                        onClick={() => confirmDeleteOrder(order)}
-                            className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold flex items-center gap-2"
-                        style={{ fontFamily: 'Inter, sans-serif' }}
-                      >
-                            🗑️ Delete
-                      </button>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex flex-col">
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-2 mt-2">
+                                <button
+                                  onClick={() => toggleOrderDetails(order.id)}
+                                  className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-md px-3 py-1.5 transition-all shadow-sm"
+                                >
+                                  {expandedOrder === order.id ? 'Hide' : 'Show'} Details
+                                </button>
+                                <button
+                                  onClick={() => confirmDeleteOrder(order)}
+                                  className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md px-3 py-1.5 transition-all shadow-sm"
+                                >
+                                  Delete Order
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

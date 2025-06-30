@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+// Link is not used, so it can be removed for cleaner code
+// import { Link } from 'react-router-dom';
 import { 
   FaPhone, 
   FaEnvelope, 
@@ -15,193 +16,93 @@ import {
 } from 'react-icons/fa';
 
 function Footer() {
-  const footerStyle = {
-    background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
-    color: 'white',
-    padding: 'clamp(2rem, 4vw, 3rem) 0 clamp(1rem, 2vw, 1.5rem) 0',
-    marginTop: '3rem',
-    borderRadius: '20px 20px 0 0',
-    boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-    position: 'relative',
-    overflow: 'hidden'
-  }
-  
-  const contentStyle = {
-    display: 'flex', 
-    flexDirection: 'column',
-    gap: 'clamp(1.5rem, 4vw, 2.5rem)', 
-    padding: '0 clamp(1rem, 3vw, 2rem) clamp(0.75rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem)',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    position: 'relative',
-    zIndex: 2
-  }
-  
-  const sectionStyle = { 
-    minWidth: '220px', 
-    flex: 1, 
-    marginBottom: '1rem' 
-  }
-  
-  const titleStyle = { 
-    fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)', 
-    fontWeight: 700, 
-    color: '#ffd700', 
-    marginBottom: 'clamp(12px, 2vw, 16px)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  }
-  
-  const textStyle = { 
-    fontSize: 'clamp(0.875rem, 2vw, 0.97rem)', 
-    color: '#e8f4fd', 
-    marginBottom: 'clamp(8px, 1.5vw, 10px)', 
-    lineHeight: 1.6 
-  }
-  
-  const linkStyle = { 
-    color: '#87ceeb', 
-    textDecoration: 'none', 
-    fontSize: 'clamp(0.875rem, 2vw, 0.97rem)', 
-    marginBottom: 'clamp(8px, 1.5vw, 10px)', 
-    display: 'flex', 
-    alignItems: 'center',
-    gap: '8px',
-    transition: 'all 0.3s ease',
-    padding: '4px 0'
-  }
-  
-  const socialStyle = { 
-    display: 'flex', 
-    gap: 'clamp(12px, 3vw, 16px)', 
-    marginTop: 'clamp(8px, 1.5vw, 12px)' 
-  }
-  
-  const socialIcon = { 
-    fontSize: 'clamp(20px, 4vw, 24px)', 
-    color: '#e8f4fd', 
-    transition: 'all 0.3s ease',
-    padding: '8px',
-    borderRadius: '50%',
-    background: 'rgba(255,255,255,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
-  
-  const bottomStyle = { 
-    borderTop: '1px solid rgba(255,255,255,0.2)', 
-    paddingTop: 'clamp(16px, 3vw, 20px)', 
-    textAlign: 'center', 
-    fontSize: 'clamp(0.875rem, 2vw, 0.95rem)', 
-    color: '#b0c4de',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px'
-  }
-
-  const featureStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '8px',
-    fontSize: 'clamp(0.875rem, 2vw, 0.97rem)',
-    color: '#e8f4fd'
-  }
-
   return (
-    <footer style={footerStyle}>
+    <footer 
+      className="bg-gradient-to-br from-[#1e3c72] to-[#2a5298] text-white py-12 sm:py-16 mt-12 rounded-t-2xl shadow-2xl shadow-slate-300 relative overflow-hidden"
+    >
       {/* Background Pattern */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)',
-        zIndex: 1
-      }}></div>
+      <div 
+        className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.3)_0%,_transparent_50%),_radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.3)_0%,_transparent_50%)] z-0"
+      ></div>
       
-      <div style={contentStyle}>
-        {/* Single Responsive Layout */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 'clamp(1.5rem, 4vw, 2.5rem)',
-          width: '100%'
-        }}>
-          {/* About Section */}
-          <div style={sectionStyle}>
-            <h3 style={titleStyle}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* --- Main Content: Single Responsive Layout --- */}
+        {/* This container is a column on mobile and a row on screens sm and larger */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between gap-10 sm:gap-8 mb-10">
+
+          {/* Section 1: About Taaza - HIDDEN ON MOBILE */}
+          {/* 👇 MODIFIED HERE: Added 'hidden sm:block' */}
+          <div className="hidden sm:block flex-1 min-w-[220px]">
+            <h3 className="text-lg font-bold text-yellow-400 mb-4 flex items-center gap-2">
               <FaShieldAlt />
               About Taaza
             </h3>
-            <p style={textStyle}>
+            <p className="text-sm text-blue-100 mb-3 leading-relaxed">
               Premium fresh meat and fish delivered to your doorstep. We ensure the highest quality products with competitive prices and exceptional service.
             </p>
-            <div style={featureStyle}>
-              <FaTruck style={{color: '#ffd700'}} />
+            <div className="flex items-center gap-2 text-sm text-blue-100 mb-1">
+              <FaTruck className="text-yellow-400" />
               <span>Free Delivery on orders above ₹500</span>
             </div>
-            <div style={featureStyle}>
-              <FaClock style={{color: '#ffd700'}} />
+            <div className="flex items-center gap-2 text-sm text-blue-100">
+              <FaClock className="text-yellow-400" />
               <span>Same day delivery available</span>
             </div>
           </div>
           
-          {/* Contact Section */}
-          <div style={sectionStyle}>
-            <h3 style={titleStyle}>
+          {/* Section 2: Contact Info - ALWAYS VISIBLE */}
+          <div className="flex-1 min-w-[220px]">
+            <h3 className="text-lg font-bold text-yellow-400 mb-4 flex items-center gap-2">
               <FaEnvelope />
               Contact Info
             </h3>
-            <div style={featureStyle}>
-              <FaPhone style={{color: '#87ceeb'}} />
-              <span>+91 98765 43210</span>
+            <div className="flex items-center gap-2 text-sm text-sky-300 mb-2">
+              <FaPhone />
+              <span>‪+91 98765 43210‬</span>
             </div>
-            <div style={featureStyle}>
-              <FaEnvelope style={{color: '#87ceeb'}} />
+            <div className="flex items-center gap-2 text-sm text-sky-300 mb-2">
+              <FaEnvelope />
               <span>info@taaza.com</span>
             </div>
-            <div style={featureStyle}>
-              <FaMapMarkerAlt style={{color: '#87ceeb'}} />
+            <div className="flex items-center gap-2 text-sm text-sky-300">
+              <FaMapMarkerAlt />
               <span>123 Main Street, City, State</span>
             </div>
           </div>
           
-          {/* Social Section */}
-          <div style={sectionStyle}>
-            <h3 style={titleStyle}>
+          {/* Section 3: Follow Us - HIDDEN ON MOBILE */}
+          {/* 👇 MODIFIED HERE: Added 'hidden sm:block' */}
+          <div className="hidden sm:block flex-1 min-w-[220px]">
+            <h3 className="text-lg font-bold text-yellow-400 mb-4 flex items-center gap-2">
               <FaHeart />
               Follow Us
             </h3>
-            <div style={socialStyle}>
-              <a href="#" style={socialIcon} onMouseOver={(e) => {e.target.style.background = 'rgba(255,255,255,0.2)'; e.target.style.transform = 'translateY(-2px)'}} onMouseOut={(e) => {e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.transform = 'translateY(0)'}}>
-                <FaFacebook />
+            <div className="flex items-center gap-4 mt-2">
+              <a href="#" className="p-2 rounded-full bg-white/10 text-blue-100 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                <FaFacebook size={20} />
               </a>
-              <a href="#" style={socialIcon} onMouseOver={(e) => {e.target.style.background = 'rgba(255,255,255,0.2)'; e.target.style.transform = 'translateY(-2px)'}} onMouseOut={(e) => {e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.transform = 'translateY(0)'}}>
-                <FaInstagram />
+              <a href="#" className="p-2 rounded-full bg-white/10 text-blue-100 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                <FaInstagram size={20} />
               </a>
-              <a href="#" style={socialIcon} onMouseOver={(e) => {e.target.style.background = 'rgba(255,255,255,0.2)'; e.target.style.transform = 'translateY(-2px)'}} onMouseOut={(e) => {e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.transform = 'translateY(0)'}}>
-                <FaTwitter />
+              <a href="#" className="p-2 rounded-full bg-white/10 text-blue-100 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                <FaTwitter size={20} />
               </a>
-              <a href="#" style={socialIcon} onMouseOver={(e) => {e.target.style.background = 'rgba(255,255,255,0.2)'; e.target.style.transform = 'translateY(-2px)'}} onMouseOut={(e) => {e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.transform = 'translateY(0)'}}>
-                <FaYoutube />
+              <a href="#" className="p-2 rounded-full bg-white/10 text-blue-100 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300">
+                <FaYoutube size={20} />
               </a>
             </div>
           </div>
         </div>
         
-        {/* Bottom Copyright */}
-        <div style={bottomStyle}>
-          <FaHeart style={{color: '#ff6b6b'}} />
-          © 2024 Taaza Non-Veg Market. All rights reserved.
+        {/* Bottom Bar */}
+        <div className="border-t border-white/20 pt-6 text-sm text-blue-200 flex items-center justify-center gap-2">
+          <FaHeart className="text-red-400" />
+          <span>© {new Date().getFullYear()} Taaza Non-Veg Market. All rights reserved.</span>
         </div>
       </div>
     </footer>
-  )
+  );
 }
 
-export default Footer
+export default Footer;

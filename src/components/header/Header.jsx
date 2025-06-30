@@ -7,16 +7,7 @@ function Header() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [cartItemCount, setCartItemCount] = useState(0)
   const [showUserMenu, setShowUserMenu] = useState(false)
-
-  useEffect(() => {
-    const savedCart = localStorage.getItem('taazaCart')
-    if (savedCart) {
-      const cartItems = JSON.parse(savedCart)
-      setCartItemCount(cartItems.length)
-    }
-  }, [])
 
   // Prevent background scroll when mobile menu is open
   useEffect(() => {
@@ -95,11 +86,6 @@ function Header() {
                   >
                     <FaShoppingCart size={16} />
                     <span>Cart</span>
-                    {cartItemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                        {cartItemCount}
-                      </span>
-                    )}
                   </Link>
                 </>
               )}
@@ -239,11 +225,6 @@ function Header() {
                 >
                   <FaShoppingCart size={18} />
                   <span>Cart</span>
-                  {cartItemCount > 0 && (
-                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                      {cartItemCount}
-                    </span>
-                  )}
                 </Link>
               </>
             )}

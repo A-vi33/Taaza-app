@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { db } from '../../../firebase';
 import { collection, getDocs, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import bgImg from '../../../assets/bg.jpg'; // This import is essential for the header
@@ -310,7 +310,7 @@ function ProductCard({ item, onAddToCart }) {
         </p>
         <div className="mt-4">
           {!showWeightInput ? (
-            <button onClick={handleShowInput} className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+            <button onClick={handleShowInput} className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
               Add to Cart
             </button>
           ) : (
@@ -330,9 +330,14 @@ function ProductCard({ item, onAddToCart }) {
                 placeholder="Enter grams (min 50)"
                 className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500"
               />
-              <button onClick={handleConfirm} className="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-900 transition-colors duration-300">
-                Confirm & Add
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={handleConfirm} className="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">
+                  Confirm & Add
+                </button>
+                <Link to="/cart" className="flex-1 text-center bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors duration-300">
+                  Go to Cart
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -458,18 +463,27 @@ function Home(props) {
         </nav>
        
         <div className="space-y-12">
-          {Object.entries(groupedProducts).map(([category, items]) => (
-            <section key={category} aria-labelledby={`${category}-heading`}>
-              <h2 id={`${category}-heading`} className="text-3xl font-bold text-slate-800 border-b-4 border-red-500 pb-2 mb-8 capitalize">
-                {category}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {items.map(item => (
-                  <ProductCard key={item.id} item={item} onAddToCart={handleAddToCart} />
-                ))}
-              </div>
-            </section>
-          ))}
+          {Object.entries(groupedProducts).map(([category, items]) => {
+            const isGrid = items.length > 4;
+            const containerClasses = isGrid
+              ? "grid grid-rows-2 grid-flow-col gap-x-8 gap-y-6 overflow-x-auto pb-6"
+              : "flex flex-row overflow-x-auto gap-4 py-4";
+
+            return (
+              <section key={category} aria-labelledby={`${category}-heading`}>
+                <h2 id={`${category}-heading`} className="text-3xl font-bold text-slate-800 border-b-4 border-red-500 pb-2 mb-8 capitalize">
+                  {category}
+                </h2>
+                <div className={containerClasses}>
+                  {items.map(item => (
+                    <div key={item.id} className="w-[280px] sm:w-[320px] flex-shrink-0">
+                      <ProductCard item={item} onAddToCart={handleAddToCart} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
           {Object.keys(groupedProducts).length === 0 && !loading && (
             <div className="text-center py-16">
               <p className="text-2xl font-semibold text-slate-500">No products found in this category.</p>

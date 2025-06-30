@@ -350,144 +350,68 @@ function Cart(props) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
-                🛒
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-800">Shopping Cart</h1>
-                <p className="text-slate-600">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your cart</p>
-              </div>
-            </div>
-            <div className="hidden sm:block">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg">
-                Total: ₹{total}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content">
+      <div className="responsive-card responsive-p-4 sm:responsive-p-8 max-w-4xl mx-auto">
+        <h1 className="responsive-text-2xl sm:responsive-text-3xl font-bold mb-6 text-center">Your Cart</h1>
         
-        {/* Cart Items */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-6">
           {cartItems.map(item => (
-            <div key={item.id + '-' + item.weight} className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 hover:shadow-2xl transition-all duration-300">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                {/* Product Image */}
-                <div className="relative">
+            <div key={item.id + '-' + item.weight} className="bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-md">
                   <img 
                     src={item.imageUrl} 
                     alt={item.name} 
-                    className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl shadow-lg" 
-                  />
-                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                    {item.category}
-                  </div>
-                </div>
-                
-                {/* Product Details */}
+                className="w-full sm:w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
+              />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">{item.name}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <p className="text-sm text-slate-600 font-medium">Weight</p>
-                      <p className="text-lg font-bold text-slate-800">{item.weight}g</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <p className="text-sm text-slate-600 font-medium">Price</p>
-                      <p className="text-lg font-bold text-slate-800">₹{item.price}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <p className="text-sm text-slate-600 font-medium">Available</p>
-                      <p className="text-lg font-bold text-green-600">
-                        {products.find(p => p.id === item.id)?.quantity || 0} kg
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Quantity Controls */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                <h3 className="responsive-text-lg font-bold text-white mb-2">{item.name}</h3>
+                <p className="responsive-text-sm text-gray-300 mb-2">{item.weight}g</p>
+                <p className="responsive-text-base text-gray-200 mb-3">
+                  ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-400">₹{item.price * item.quantity}</span>
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2">
                       <button 
-                        className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-900 transition touch-target disabled:opacity-50"
                         onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)} 
                         disabled={item.quantity <= 1}
                       >
-                        <span className="text-lg font-bold">−</span>
+                    -
                       </button>
-                      <span className="text-xl font-bold text-slate-800 min-w-[3rem] text-center">{item.quantity}</span>
+
+                  <span className="responsive-text-base font-medium text-white mx-2 min-w-[2rem] text-center">{item.quantity}</span>
+                  
                       <button 
-                        className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105" 
+                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-900 transition touch-target" 
                         onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
                       >
-                        <span className="text-lg font-bold">+</span>
+                    +
                       </button>
-                    </div>
                     
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-sm text-slate-600">Subtotal</p>
-                        <p className="text-2xl font-bold text-green-600">₹{item.price * item.quantity}</p>
-                      </div>
                       <button 
-                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105" 
+                    className="px-3 py-1 text-xs font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition ml-2 sm:ml-4 touch-target" 
                         onClick={() => removeItem(item.id, item.weight)}
                       >
-                        🗑️ Remove
+                    Remove
                       </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
         
-        {/* Order Summary */}
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-white text-lg shadow-lg">
-              📋
-            </div>
-            Order Summary
-          </h2>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-slate-200">
-              <span className="text-slate-600 font-medium">Items ({cartItems.length})</span>
-              <span className="text-slate-800 font-semibold">{cartItems.length}</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-slate-200">
-              <span className="text-slate-600 font-medium">Subtotal</span>
-              <span className="text-slate-800 font-semibold">₹{total}</span>
-            </div>
-            <div className="flex justify-between items-center py-3 border-b border-slate-200">
-              <span className="text-slate-600 font-medium">Delivery</span>
-              <span className="text-green-600 font-semibold">Free</span>
-            </div>
-            <div className="flex justify-between items-center pt-3">
-              <span className="text-2xl font-bold text-slate-800">Total</span>
-              <span className="text-3xl font-bold text-green-600">₹{total}</span>
-            </div>
+        <div className="responsive-card responsive-p-4 bg-gray-50 rounded-lg mb-6">
+          <div className="flex justify-between items-center">
+            <span className="responsive-text-xl font-bold">Total:</span>
+            <span className="responsive-text-xl font-bold text-green-600">₹{total}</span>
           </div>
         </div>
         
-        {/* Checkout Button */}
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6">
           <button 
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105" 
+          className="w-full responsive-btn bg-green-600 text-white hover:bg-green-700 transition font-semibold touch-target" 
             onClick={handleCheckout}
           >
-            🚀 Proceed to Checkout - ₹{total}
+          Proceed to Checkout
           </button>
-          <p className="text-center text-slate-600 mt-4 text-sm">
-            Secure payment powered by Razorpay
-          </p>
-        </div>
       </div>
     </div>
   );

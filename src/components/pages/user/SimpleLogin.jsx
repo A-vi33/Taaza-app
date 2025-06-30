@@ -33,10 +33,6 @@ function SimpleLogin() {
   const [existingUser, setExistingUser] = useState(null);
   const [checkingMobile, setCheckingMobile] = useState(false);
 
-  // Fixed admin credentials
-  const ADMIN_NAME = 'Admin';
-  const ADMIN_MOBILE = '9876543210';
-
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
@@ -72,19 +68,6 @@ function SimpleLogin() {
     setLoading(true);
 
     try {
-      // Check if it's admin login
-      if (name.trim().toLowerCase() === ADMIN_NAME.toLowerCase() && mobile === ADMIN_MOBILE) {
-        setUser({ 
-          type: 'admin', 
-          name: ADMIN_NAME, 
-          mobile: ADMIN_MOBILE,
-          isAdmin: true 
-        });
-        showToast('Admin login successful!', 'success');
-        setTimeout(() => navigate('/admin/dashboard'), 1000);
-        return;
-      }
-
       // Validate user input
       if (!name.trim() || !mobile.trim()) {
         showToast('Please enter both name and mobile number', 'error');
@@ -104,8 +87,9 @@ function SimpleLogin() {
       const querySnapshot = await getDocs(q);
 
       let userData;
+      let docId;
       if (querySnapshot.empty) {
-        // Create new user
+        // Create new user for customers only. Admins must be created in the DB.
         const newUser = {
           name: name.trim(),
           mobile: mobile,
@@ -116,38 +100,39 @@ function SimpleLogin() {
         
         // Add to Firestore
         const docRef = await addDoc(collection(db, 'users'), newUser);
-        userData = { ...newUser, id: docRef.id };
+        docId = docRef.id;
+        userData = newUser;
         showToast('New user account created successfully!', 'success');
       } else {
-        // Existing user found - use the original name from database
-        const existingUser = querySnapshot.docs[0];
-        userData = { id: existingUser.id, ...existingUser.data() };
+        // Existing user found
+        const existingUserDoc = querySnapshot.docs[0];
+        docId = existingUserDoc.id;
+        userData = existingUserDoc.data();
         
-        // Check if the provided name is different from the stored name
-        if (name.trim().toLowerCase() !== userData.name.toLowerCase()) {
-          showToast(`Welcome back! Your registered name is: ${userData.name}`, 'success');
-        } else {
-          showToast('Welcome back!', 'success');
-        }
+        showToast(`Welcome back, ${userData.name}!`, 'success');
         
         // Update last login time
-        await setDoc(doc(db, 'users', existingUser.id), {
-          ...userData,
+        await setDoc(doc(db, 'users', docId), {
           lastLogin: serverTimestamp()
         }, { merge: true });
       }
 
-      // Set user in context with the name from database (original name)
+      // Set user in context
+      const isAdmin = userData.type === 'admin';
       setUser({
-        type: 'customer',
-        name: userData.name, // Always use the name from database
+        id: docId,
+        name: userData.name,
         mobile: userData.mobile,
-        id: userData.id,
-        isAdmin: false
+        type: userData.type,
+        isAdmin: isAdmin,
       });
 
-      // Navigate to home page
-      setTimeout(() => navigate('/'), 1000);
+      // Navigate based on role
+      if (isAdmin) {
+        setTimeout(() => navigate('/admin/dashboard'), 1000);
+      } else {
+        setTimeout(() => navigate('/'), 1000);
+      }
 
     } catch (error) {
       console.error('Login error:', error);
@@ -158,30 +143,31 @@ function SimpleLogin() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ display: 'flex', width: '900px', maxWidth: '98vw', background: 'transparent', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.18)' }}>
-        {/* Left: Form */}
-        <div style={{ flex: 1, background: 'transparent', padding: '3.5rem 2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h2 style={{ color: 'white', fontSize: '2.2rem', fontWeight: 700, marginBottom: 32, textAlign: 'left' }}>Welcome to Taaza</h2>
-          <form onSubmit={handleLogin} style={{ width: '100%', maxWidth: 400 }}>
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ color: '#fff', fontWeight: 500, marginBottom: 6, display: 'block', fontSize: 16 }}>Full Name</label>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <Toast message={toast.message} show={toast.show} type={toast.type} onClose={() => setToast({ ...toast, show: false })} />
+      <div className="flex flex-col lg:flex-row w-full max-w-4xl bg-transparent rounded-2xl overflow-hidden shadow-2xl">
+        {/* Form Section */}
+        <div className="w-full lg:w-1/2 bg-transparent p-8 sm:p-12 flex flex-col justify-center order-2 lg:order-1">
+          <h2 className="text-white text-4xl font-bold mb-8 text-left">Welcome to Taaza</h2>
+          <form onSubmit={handleLogin} className="w-full max-w-md">
+            <div className="mb-4">
+              <label className="text-white font-medium mb-2 block text-lg">Full Name</label>
               <input
                 type="text"
                 placeholder="Enter your full name"
-                style={{ width: '100%', padding: '0.9rem 1.1rem', borderRadius: 10, border: '1.5px solid #3a3232', background: 'transparent', color: '#fff', fontSize: 16, outline: 'none', marginTop: 4, marginBottom: 2 }}
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-transparent text-white text-lg focus:outline-none focus:border-red-500 transition-colors"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ color: '#fff', fontWeight: 500, marginBottom: 6, display: 'block', fontSize: 16 }}>Mobile Number</label>
+            <div className="mb-4">
+              <label className="text-white font-medium mb-2 block text-lg">Mobile Number</label>
               <input
                 type="tel"
                 placeholder="Enter your 10-digit mobile number"
                 maxLength="10"
-                style={{ width: '100%', padding: '0.9rem 1.1rem', borderRadius: 10, border: '1.5px solid #3a3232', background: 'transparent', color: '#fff', fontSize: 16, outline: 'none', marginTop: 4, marginBottom: 2 }}
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-700 bg-transparent text-white text-lg focus:outline-none focus:border-red-500 transition-colors"
                 value={mobile}
                 onChange={(e) => {
                   setMobile(e.target.value);
@@ -190,65 +176,38 @@ function SimpleLogin() {
                 required
               />
               {checkingMobile && (
-                <div style={{ color: '#f39c12', fontSize: 14, marginTop: 4 }}>
+                <div className="text-yellow-500 text-sm mt-2">
                   Checking mobile number...
                 </div>
               )}
               {existingUser && (
-                <div style={{ color: '#00b894', fontSize: 14, marginTop: 4, padding: '8px 12px', backgroundColor: 'rgba(0,184,148,0.1)', borderRadius: '6px', border: '1px solid #00b894' }}>
+                <div className="text-green-400 text-sm mt-2 p-3 bg-green-900/50 rounded-lg border border-green-700">
                   ✅ Welcome back! Your registered name has been auto-filled.
                 </div>
               )}
             </div>
-            <button style={{ width: '100%', background: '#e74c3c', color: 'white', padding: '0.9rem', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 18, marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(231,76,60,0.10)' }} type="submit" disabled={loading}>
+            <button className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-xl mb-3 cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300" type="submit" disabled={loading}>
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
-            {toast.show && (
-              <div style={{ 
-                color: toast.type === 'success' ? '#00b894' : '#ff7675', 
-                marginTop: 8, 
-                fontWeight: 500,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                backgroundColor: toast.type === 'success' ? 'rgba(0,184,148,0.1)' : 'rgba(255,118,117,0.1)',
-                border: `1px solid ${toast.type === 'success' ? '#00b894' : '#ff7675'}`
-              }}>
-                {toast.message}
-              </div>
-            )}
-            <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <p style={{ color: '#b2bec3', fontSize: 15, textAlign: 'left', width: 'fit-content' }}>By signing in, you agree to our terms and conditions</p>
+            <div className="mt-4 flex flex-col gap-2">
+              <p className="text-gray-400 text-base text-left">By signing in, you agree to our terms and conditions</p>
             </div>
           </form>
         </div>
-        {/* Right: Image */}
-        <div style={{ flex: 1, background: 'linear-gradient(135deg,rgb(0, 0, 0) 0%,rgb(11, 9, 12) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <div style={{ textAlign: 'center', color: 'white', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        
+        {/* Image Section */}
+        <div className="w-full lg:w-1/2 flex bg-gradient-to-br from-gray-900 to-black items-center justify-center relative p-8 order-1 lg:order-2">
+          <div className="text-center text-white z-10 flex flex-col items-center gap-6">
             <img 
               src={bgImg} 
               alt="Taaza" 
-              style={{ 
-                width: '80%', 
-                maxWidth: '350px', 
-                height: 'auto', 
-                borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-              }} 
+              className="w-4/5 max-w-sm h-auto rounded-2xl shadow-lg"
             />
-            <div style={{ marginTop: '1rem' }}>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Fresh Meat Market</h3>
-              <p style={{ fontSize: '1.1rem', opacity: 0.9, fontWeight: 400 }}>Quality products, delivered fresh</p>
+            <div className="mt-4">
+              <h3 className="text-3xl font-bold mb-2">Fresh Meat Market</h3>
+              <p className="text-lg opacity-90">Quality products, delivered fresh</p>
             </div>
           </div>
-          <div style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            background: 'rgba(0,0,0,0.3)', 
-            zIndex: 1 
-          }}></div>
         </div>
       </div>
     </div>

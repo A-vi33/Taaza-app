@@ -18,6 +18,7 @@ function AdminProducts() {
   const [newPrice, setNewPrice] = useState('');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateProduct, setDuplicateProduct] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   useEffect(() => {
     if (!authLoading && (!user || !user.isAdmin)) {
@@ -36,6 +37,11 @@ function AdminProducts() {
     return () => unsubscribe();
   }, []);
 
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+  };
+
   const handleChange = e => {
     const { name, value, files } = e.target;
     if (name === "image" && files && files[0]) {
@@ -51,46 +57,48 @@ function AdminProducts() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setError(null);
     
-    // Check for duplicate product (same name and image)
-    if (!editingId) { // Only check for duplicates when adding new product, not editing
-      const duplicate = products.find(product => 
-        product.name.toLowerCase().trim() === form.name.toLowerCase().trim() &&
-        product.imageUrl === form.image
-      );
+    // 1. Validate all fields are filled
+    if (!form.name || !form.category || !form.price || !form.quantity || (!form.image && !editingId)) {
+      showToast("Please fill out all product details, including the image.", "error");
+      return;
+    }
+
+    // 2. Check for duplicate product name (only when adding a new product)
+    if (!editingId) {
+      const productNameLower = form.name.toLowerCase().trim();
+      const isDuplicate = products.some(p => p.name.toLowerCase().trim() === productNameLower);
       
-      if (duplicate) {
-        setDuplicateProduct(duplicate);
-        setShowDuplicateModal(true);
+      if (isDuplicate) {
+        showToast("A product with this name already exists.", "error");
         return;
       }
     }
     
     try {
-      let imageUrl = form.image;
+      let imageUrl = form.image; // In this version, image is a base64 string or existing URL
+      
+      const productData = {
+        name: form.name,
+        category: form.category,
+        price: Number(form.price),
+        quantity: Number(form.quantity),
+        imageUrl: imageUrl, // Directly use the image URL or base64 data
+      };
+
       if (editingId) {
-        await updateDoc(doc(db, 'products', editingId), {
-          name: form.name,
-          category: form.category,
-          price: Number(form.price),
-          imageUrl,
-          quantity: Number(form.quantity),
-        });
+        await updateDoc(doc(db, 'products', editingId), productData);
+        showToast("Product updated successfully", "success");
       } else {
-        await addDoc(collection(db, 'products'), {
-          name: form.name,
-          category: form.category,
-          price: Number(form.price),
-          imageUrl,
-          quantity: Number(form.quantity),
-        });
+        await addDoc(collection(db, 'products'), productData);
+        showToast("Product added successfully", "success");
       }
+
       setForm({ name: '', category: '', price: '', image: null, quantity: '' });
       setEditingId(null);
     } catch (err) {
-      setError('Failed to save product.');
-      console.error('Image upload or product save error:', err);
+      showToast("Failed to save product. Please try again.", "error");
+      console.error('Product save error:', err);
     }
   };
 
@@ -115,12 +123,18 @@ function AdminProducts() {
       setEditingPriceId(null);
       setNewPrice('');
     } catch (err) {
-      setError('Failed to update price.');
+      showToast("Failed to update price.", 'error');
     }
   };
 
   return (
     <div className="relative main-content min-h-screen bg-white">
+      <Toast 
+        message={toast.message} 
+        show={toast.show} 
+        onClose={() => setToast({ ...toast, show: false })} 
+        type={toast.type} 
+      />
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
         {/* Enhanced Page Header */}
         <div className="mb-8 pb-6 border-b border-white/20">

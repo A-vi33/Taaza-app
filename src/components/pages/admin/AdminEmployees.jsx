@@ -16,11 +16,55 @@ import {
 } from "firebase/firestore";
 import Toast from "../../Toast";
 
+function PaymentModal({ isOpen, onClose, employee, onConfirm }) {
+  const [amount, setAmount] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      alert("Please enter a valid payment amount.");
+      return;
+    }
+    onConfirm(paymentAmount);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md m-4 transform transition-all animate-scale-in">
+        <h3 className="text-xl font-bold text-slate-800 mb-4">Record Payment for {employee.name}</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Payment Amount (₹)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount paid"
+              className="w-full responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={onClose} className="px-6 py-3 text-slate-600 hover:text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition shadow-sm font-semibold">
+              Cancel
+            </button>
+            <button onClick={handleConfirm} className="bg-slate-600 text-white px-6 py-3 rounded-xl shadow-lg hover:bg-slate-700 transition font-semibold">
+              Confirm Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminEmployees() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [payroll, setPayroll] = useState([]);
   const [loading, setLoading] = useState(true);
   const [leaveLoading, setLeaveLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
@@ -28,8 +72,6 @@ function AdminEmployees() {
   const [employeeForm, setEmployeeForm] = useState({
     name: "",
     phone: "",
-    email: "",
-    position: "",
     salary: "",
     joinDate: "",
     leaveBalance: 20
@@ -42,6 +84,8 @@ function AdminEmployees() {
     leaveType: "casual"
   });
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedEmployeeForPayment, setSelectedEmployeeForPayment] = useState(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !user.isAdmin)) {
@@ -51,6 +95,7 @@ function AdminEmployees() {
     if (!authLoading && user && user.isAdmin) {
       fetchEmployees();
       fetchLeaveRequests();
+      fetchPayrollForCurrentMonth();
     }
   }, [user, authLoading, navigate]);
 
@@ -88,6 +133,27 @@ function AdminEmployees() {
     }
   };
 
+  const fetchPayrollForCurrentMonth = async () => {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      const q = query(
+        collection(db, "payroll"),
+        where("paymentDate", ">=", startOfMonth),
+        where("paymentDate", "<=", endOfMonth)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const payrollData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPayroll(payrollData);
+    } catch (error) {
+      console.error("Error fetching payroll data:", error);
+      showToast("Error loading payroll data", "error");
+    }
+  };
+
   const handleEmployeeFormChange = (e) => {
     const { name, value } = e.target;
     setEmployeeForm(prev => ({
@@ -110,8 +176,6 @@ function AdminEmployees() {
       const employeeData = {
         name: employeeForm.name,
         phone: employeeForm.phone,
-        email: employeeForm.email,
-        position: employeeForm.position,
         salary: Number(employeeForm.salary),
         joinDate: employeeForm.joinDate,
         leaveBalance: Number(employeeForm.leaveBalance),
@@ -130,8 +194,6 @@ function AdminEmployees() {
       setEmployeeForm({
         name: "",
         phone: "",
-        email: "",
-        position: "",
         salary: "",
         joinDate: "",
         leaveBalance: 20
@@ -204,7 +266,7 @@ function AdminEmployees() {
         await updateDoc(doc(db, "leaveRequests", leaveId), {
           status: "approved",
           approvedAt: serverTimestamp(),
-          approvedBy: user.email
+          approvedBy: user?.email || user?.name || "Admin"
         });
 
         // Update employee leave balance
@@ -219,7 +281,7 @@ function AdminEmployees() {
         await updateDoc(doc(db, "leaveRequests", leaveId), {
           status: "rejected",
           rejectedAt: serverTimestamp(),
-          rejectedBy: user.email
+          rejectedBy: user?.email || user?.name || "Admin"
         });
         showToast("Leave request rejected");
       }
@@ -236,8 +298,6 @@ function AdminEmployees() {
     setEmployeeForm({
       name: employee.name || "",
       phone: employee.phone || "",
-      email: employee.email || "",
-      position: employee.position || "",
       salary: employee.salary || "",
       joinDate: employee.joinDate || "",
       leaveBalance: employee.leaveBalance || 20
@@ -283,8 +343,47 @@ function AdminEmployees() {
     setTimeout(() => setToast({ show: false, message: "", type }), 3000);
   };
 
+  const handleRecordPayment = async (amount) => {
+    if (!selectedEmployeeForPayment) {
+      showToast("No employee selected for payment.", "error");
+      return;
+    }
+  
+    try {
+      await addDoc(collection(db, "payroll"), {
+        employeeId: selectedEmployeeForPayment.id,
+        employeeName: selectedEmployeeForPayment.name,
+        amount: Number(amount),
+        paymentDate: serverTimestamp(),
+        recordedBy: user?.email || user?.name || "Admin",
+      });
+  
+      showToast(`Payment of ₹${amount} recorded for ${selectedEmployeeForPayment.name}`);
+      // Refetch payroll to update UI
+      fetchPayrollForCurrentMonth();
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      showToast("Error recording payment", "error");
+    } finally {
+      // Close modal and reset state
+      setIsPaymentModalOpen(false);
+      setSelectedEmployeeForPayment(null);
+    }
+  };
+  
+  const openPaymentModal = (employee) => {
+    setSelectedEmployeeForPayment(employee);
+    setIsPaymentModalOpen(true);
+  };
+
   return (
     <div className="relative main-content min-h-screen bg-white">
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        employee={selectedEmployeeForPayment}
+        onConfirm={handleRecordPayment}
+      />
       <div className="relative z-10 responsive-p-4 sm:responsive-p-8 max-w-6xl mx-auto">
         <Toast 
           message={toast.message} 
@@ -374,23 +473,7 @@ function AdminEmployees() {
                     className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
                     required
                   />
-                  <input
-                    name="email"
-                    value={employeeForm.email}
-                    onChange={handleEmployeeFormChange}
-                    placeholder="Email Address"
-                    type="email"
-                    className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
-                    required
-                  />
-                  <input
-                    name="position"
-                    value={employeeForm.position}
-                    onChange={handleEmployeeFormChange}
-                    placeholder="Position/Role"
-                    className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
-                    required
-                  />
+                  
                   <input
                     name="salary"
                     value={employeeForm.salary}
@@ -426,8 +509,6 @@ function AdminEmployees() {
                         setEmployeeForm({
                           name: "",
                           phone: "",
-                          email: "",
-                          position: "",
                           salary: "",
                           joinDate: "",
                           leaveBalance: 20
@@ -468,61 +549,82 @@ function AdminEmployees() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {employees.map(employee => (
-                    <div key={employee.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
-                      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-bold text-slate-900 responsive-text-lg">
-                              {employee.name}
-                            </h4>
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-600 text-white">
-                              {employee.position}
-                            </span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              employee.leaveBalance > 10 ? "bg-green-100 text-green-800" :
-                              employee.leaveBalance > 5 ? "bg-yellow-100 text-yellow-800" :
-                              "bg-red-100 text-red-800"
-                            }`}>
-                              {employee.leaveBalance} days leave
-                            </span>
+                  {employees.map(employee => {
+                    const paymentsThisMonth = payroll
+                      .filter(p => p.employeeId === employee.id)
+                      .reduce((sum, p) => sum + p.amount, 0);
+                    const balanceDue = (employee.salary || 0) - paymentsThisMonth;
+
+                    return (
+                      <div key={employee.id} className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200/50 transition-colors shadow-sm">
+                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-bold text-slate-900 responsive-text-lg">
+                                {employee.name}
+                              </h4>
+                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-600 text-white">
+                                {employee.position}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                employee.leaveBalance > 10 ? "bg-green-100 text-green-800" :
+                                employee.leaveBalance > 5 ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                              }`}>
+                                {employee.leaveBalance} days leave
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-4">
+                              <div>
+                                <p className="text-slate-600 font-medium">Phone:</p>
+                                <p className="font-semibold text-slate-900">{employee.phone}</p>
+                              </div>
+                             
+                              <div>
+                                <p className="text-slate-600 font-medium">Monthly Salary:</p>
+                                <p className="font-bold text-slate-900">₹{employee.salary?.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-600 font-medium">Join Date:</p>
+                                <p className="font-semibold text-slate-900">{employee.joinDate}</p>
+                              </div>
+                            </div>
+                            {/* Payroll Section */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-white/60 rounded-lg border border-slate-200/80">
+                              <div>
+                                <p className="text-xs text-slate-500 font-semibold">PAID THIS MONTH</p>
+                                <p className="font-bold text-lg text-green-600">₹{paymentsThisMonth.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-500 font-semibold">BALANCE DUE</p>
+                                <p className="font-bold text-lg text-red-600">₹{balanceDue.toLocaleString()}</p>
+                              </div>
+                              <button
+                                onClick={() => openPaymentModal(employee)}
+                                className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition shadow-sm font-semibold self-center"
+                              >
+                                Record Payment
+                              </button>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <p className="text-slate-600 font-medium">Phone:</p>
-                              <p className="font-semibold text-slate-900">{employee.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-slate-600 font-medium">Email:</p>
-                              <p className="font-semibold text-slate-900">{employee.email}</p>
-                            </div>
-                            <div>
-                              <p className="text-slate-600 font-medium">Salary:</p>
-                              <p className="font-bold text-slate-900">₹{employee.salary?.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-slate-600 font-medium">Join Date:</p>
-                              <p className="font-semibold text-slate-900">{employee.joinDate}</p>
-                            </div>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => handleEditEmployee(employee)}
+                              className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEmployee(employee.id)}
+                              className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold"
+                            >
+                              Delete
+                            </button>
                           </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <button
-                            onClick={() => handleEditEmployee(employee)}
-                            className="bg-slate-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition shadow-sm font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmployee(employee.id)}
-                            className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition shadow-sm font-semibold"
-                          >
-                            Delete
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

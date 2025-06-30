@@ -6,6 +6,7 @@
 }
 
 html {
+  font-size: 14px;
   scroll-behavior: smooth;
   height: 100%;
   overflow-x: hidden;

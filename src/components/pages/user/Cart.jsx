@@ -263,10 +263,17 @@ function Cart(props) {
                   const productSnap = await getDoc(productRef);
                   if (productSnap.exists()) {
                     const currentQty = productSnap.data().quantity || 0;
-                    const boughtKg = (item.weight || 0) / 1000;
-                    let newQty = currentQty - boughtKg;
+                    let newQty = currentQty;
+                    if (item.category === 'eggs') {
+                      // Deduct eggs as integer pieces
+                      newQty = currentQty - item.quantity;
+                    } else {
+                      // Existing logic for meat (by weight)
+                      const boughtKg = (item.weight || 0) / 1000;
+                      newQty = currentQty - boughtKg;
+                    }
                     if (newQty < 0) newQty = 0;
-                    await updateDoc(productRef, { quantity: newQty });
+                    await updateDoc(productRef, { quantity: Math.round(newQty) });
                   }
                 }
                 // Send SMS receipt to customer
@@ -333,7 +340,7 @@ function Cart(props) {
         
         <div className="space-y-4 mb-6">
           {cartItems.map(item => (
-            <div key={item.id + '-' + item.weight} className="bg-yellow-100 p-4 rounded-lg flex flex-row items-center gap-4 shadow-md border border-yellow-200/50">
+            <div key={item.id + '-' + (item.packSize || item.weight || '')} className="bg-yellow-100 p-4 rounded-lg flex flex-row items-center gap-4 shadow-md border border-yellow-200/50">
               <img 
                 src={item.imageUrl} 
                 alt={item.name} 
@@ -341,9 +348,15 @@ function Cart(props) {
               />
               <div className="flex-1 min-w-0">
                 <h3 className="responsive-text-lg font-bold text-gray-800 mb-2">{item.name}</h3>
-                <p className="responsive-text-sm text-yellow-800 mb-2">{item.weight}g</p>
+                {item.category === 'eggs' ? (
+                  <p className="responsive-text-sm text-yellow-800 mb-2">{item.quantity} pieces</p>
+                ) : (
+                  <p className="responsive-text-sm text-yellow-800 mb-2">{item.weight}g</p>
+                )}
                 <p className="responsive-text-base text-gray-700 mb-3">
-                  ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-600">₹{item.price * item.quantity}</span>
+                  {item.category === 'eggs'
+                    ? `₹${item.price} for ${item.quantity} pieces`
+                    : `₹${item.price} x ${item.quantity} = ₹${item.price * item.quantity}`}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <button 

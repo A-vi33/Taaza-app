@@ -275,6 +275,49 @@ const MasalaIcon = (props) => (
 
 // ▼▼▼ PRODUCT CARD HAS BEEN SIGNIFICANTLY MODIFIED FOR RESPONSIVE SIZE ▼▼▼
 function ProductCard({ item, onAddToCart }) {
+  // Eggs section: allow user to enter any number of eggs (pieces) and calculate price
+  const [eggCount, setEggCount] = useState(1);
+  if (item.category === 'eggs') {
+    const pricePerEgg = item.pricePerEgg || 0;
+    const totalPrice = eggCount * pricePerEgg;
+    return (
+      <article className="bg-yellow-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-yellow-200/50 h-full">
+        <img
+          src={item.imageUrl || 'https://via.placeholder.com/400x300'}
+          alt={item.name}
+          className="w-full h-28 sm:h-48 object-cover"
+        />
+        <div className="p-2 sm:p-4 flex flex-col flex-grow">
+          <h3 className="text-sm sm:text-lg font-bold text-slate-800 min-h-[40px] sm:min-h-[56px]">{item.name}</h3>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">{item.description}</p>
+          <div className="flex-grow" />
+          <div className="mt-2 sm:mt-4">
+            <div className="flex items-center gap-2">
+              <span>How many eggs (pieces)?</span>
+              <input
+                type="number"
+                min={1}
+                max={item.quantity}
+                value={eggCount}
+                onChange={e => setEggCount(Number(e.target.value))}
+                className="w-20 p-1 border border-slate-300 rounded"
+              />
+            </div>
+            <div className="mt-2 font-semibold text-red-700">
+              Total: ₹{totalPrice}
+            </div>
+            <button
+              onClick={() => onAddToCart(item, eggCount, totalPrice, eggCount)}
+              className="mt-2 bg-green-500 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-600 transition-colors duration-300"
+              disabled={eggCount < 1 || eggCount > item.quantity}
+            >
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  }
   const [weight, setWeight] = useState('');
   const [showWeightInput, setShowWeightInput] = useState(false);
   const calculatedPrice = useMemo(() => {
@@ -391,20 +434,38 @@ function Home(props) {
     return () => unsubscribe();
   }, []);
   
-  const handleAddToCart = (item, weight, price) => {
-    const cartItem = { ...item, weight, price, quantity: 1 };
-    const existingItem = cart.find(ci => ci.id === item.id && ci.weight === weight);
-    let updatedCart;
-    if (existingItem) {
-      updatedCart = cart.map(ci => ci.id === item.id && ci.weight === weight ? { ...ci, quantity: ci.quantity + 1 } : ci);
+  const handleAddToCart = (item, packOrWeight, price, qty = 1) => {
+    let cartItem;
+    if (item.category === 'eggs') {
+      cartItem = { ...item, packSize: packOrWeight, price, quantity: qty };
+      const existingItem = cart.find(ci => ci.id === item.id && ci.packSize === packOrWeight);
+      let updatedCart;
+      if (existingItem) {
+        updatedCart = cart.map(ci => ci.id === item.id && ci.packSize === packOrWeight ? { ...ci, quantity: ci.quantity + qty } : ci);
+      } else {
+        updatedCart = [...cart, cartItem];
+      }
+      setCart(updatedCart);
+      localStorage.setItem('taazaCart', JSON.stringify(updatedCart));
+      setSuccessMessage(`${item.name} (${packOrWeight} eggs x ${qty}) added!`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } else {
-      updatedCart = [...cart, cartItem];
+      // Existing logic for meat/other products
+      cartItem = { ...item, weight: packOrWeight, price, quantity: 1 };
+      const existingItem = cart.find(ci => ci.id === item.id && ci.weight === packOrWeight);
+      let updatedCart;
+      if (existingItem) {
+        updatedCart = cart.map(ci => ci.id === item.id && ci.weight === packOrWeight ? { ...ci, quantity: ci.quantity + 1 } : ci);
+      } else {
+        updatedCart = [...cart, cartItem];
+      }
+      setCart(updatedCart);
+      localStorage.setItem('taazaCart', JSON.stringify(updatedCart));
+      setSuccessMessage(`${item.name} (${packOrWeight}g) added!`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     }
-    setCart(updatedCart);
-    localStorage.setItem('taazaCart', JSON.stringify(updatedCart));
-    setSuccessMessage(`${item.name} (${weight}g) added!`);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
   };
   
   const groupedProducts = useMemo(() => {

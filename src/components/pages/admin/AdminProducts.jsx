@@ -11,7 +11,7 @@ function AdminProducts() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
+  const [form, setForm] = useState({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '', pricePerEgg: '' });
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState(null);
   const [editingPriceId, setEditingPriceId] = useState(null);
@@ -19,6 +19,7 @@ function AdminProducts() {
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateProduct, setDuplicateProduct] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const LOW_STOCK_THRESHOLD = 30;
 
   useEffect(() => {
     if (!authLoading && (!user || !user.isAdmin)) {
@@ -60,7 +61,7 @@ function AdminProducts() {
     
     // 1. Validate all fields are filled
     if (form.category === 'eggs') {
-      if (!form.name || !form.category || !form.price6 || !form.price12 || !form.price30 || !form.quantity || (!form.image && !editingId)) {
+      if (!form.name || !form.category || !form.pricePerEgg || !form.quantity || (!form.image && !editingId)) {
         showToast("Please fill out all product details, including the image.", "error");
         return;
       }
@@ -92,9 +93,7 @@ function AdminProducts() {
         quantity: Number(form.quantity),
         imageUrl: imageUrl, // Directly use the image URL or base64 data
         ...(form.category === 'eggs' && {
-          price6: Number(form.price6),
-          price12: Number(form.price12),
-          price30: Number(form.price30),
+          pricePerEgg: Number(form.pricePerEgg),
         })
       };
 
@@ -106,7 +105,7 @@ function AdminProducts() {
         showToast("Product added successfully", "success");
       }
 
-      setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
+      setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '', pricePerEgg: '' });
       setEditingId(null);
     } catch (err) {
       showToast("Failed to save product. Please try again.", "error");
@@ -124,6 +123,7 @@ function AdminProducts() {
       price6: p.price6 || '',
       price12: p.price12 || '',
       price30: p.price30 || '',
+      pricePerEgg: p.pricePerEgg || '',
     });
     setEditingId(p.id);
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top to see the form
@@ -224,30 +224,10 @@ function AdminProducts() {
             {form.category === 'eggs' ? (
               <>
                 <input
-                  name="price6"
-                  value={form.price6}
+                  name="pricePerEgg"
+                  value={form.pricePerEgg}
                   onChange={handleChange}
-                  placeholder="Price (₹) for 6 Eggs"
-                  type="number"
-                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                  required
-                />
-                <input
-                  name="price12"
-                  value={form.price12}
-                  onChange={handleChange}
-                  placeholder="Price (₹) for 12 Eggs"
-                  type="number"
-                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                  required
-                />
-                <input
-                  name="price30"
-                  value={form.price30}
-                  onChange={handleChange}
-                  placeholder="Price (₹) for 30 Eggs"
+                  placeholder="Price (₹) per Egg"
                   type="number"
                   className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
                   style={{ fontFamily: 'Inter, sans-serif' }}
@@ -257,9 +237,8 @@ function AdminProducts() {
                   name="quantity"
                   value={form.quantity}
                   onChange={handleChange}
-                  placeholder="Total Eggs in Stock"
+                  placeholder="Total Eggs in Stock (pieces)"
                   type="number"
-                  min="0"
                   className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
                   style={{ fontFamily: 'Inter, sans-serif' }}
                   required
@@ -316,7 +295,7 @@ function AdminProducts() {
               <button 
                 type="button" 
                 className="px-6 py-3 text-slate-600 hover:text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition shadow-sm" 
-                onClick={() => { setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' }); setEditingId(null); }}
+                onClick={() => { setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '', pricePerEgg: '' }); setEditingId(null); }}
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 Cancel
@@ -355,14 +334,17 @@ function AdminProducts() {
                       {product.category === 'eggs' ? (
                         <>
                           <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Price: <span className="font-medium text-slate-700">₹{product.price6} (6 eggs), ₹{product.price12} (12 eggs), ₹{product.price30} (30 eggs)</span>
+                            Price: <span className="font-medium text-slate-700">₹{product.pricePerEgg}/egg</span>
                           </p>
                           <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                            Stock: <span className="font-medium text-slate-700">{product.quantity} eggs</span>
+                            Stock: <span className="font-medium text-slate-700">{product.quantity} pieces</span>
                           </p>
                         </>
                       ) : (
                         <>
+                          <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            Price: <span className="font-medium text-slate-700">₹{product.price}/kg</span>
+                          </p>
                           <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                             Stock: <span className="font-medium text-slate-700">{product.quantity} kg</span>
                           </p>
@@ -373,19 +355,21 @@ function AdminProducts() {
                     <div className="flex-grow" />
 
                     <div className="mt-4">
-                      {editingPriceId === product.id ? (
-                        <div className="space-y-2">
-                          <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="New Price"/>
-                          <div className="flex gap-2">
-                            <button onClick={() => handlePriceSave(product.id)} className="flex-1 bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 shadow-sm">Save</button>
-                            <button onClick={() => setEditingPriceId(null)} className="flex-1 bg-slate-400 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-500 shadow-sm">Cancel</button>
+                      {product.category === 'eggs' ? null : (
+                        editingPriceId === product.id ? (
+                          <div className="space-y-2">
+                            <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="New Price"/>
+                            <div className="flex gap-2">
+                              <button onClick={() => handlePriceSave(product.id)} className="flex-1 bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 shadow-sm">Save</button>
+                              <button onClick={() => setEditingPriceId(null)} className="flex-1 bg-slate-400 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-500 shadow-sm">Cancel</button>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-slate-700 responsive-text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>₹{product.price}/kg</span>
-                          <button onClick={() => handlePriceEdit(product.id, product.price)} className="bg-slate-200 text-slate-800 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-slate-300 transition shadow-sm">Edit Price</button>
-                        </div>
+                        ) : (
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-slate-700 responsive-text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>₹{product.price}/kg</span>
+                            <button onClick={() => handlePriceEdit(product.id, product.price)} className="bg-slate-200 text-slate-800 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-slate-300 transition shadow-sm">Edit Price</button>
+                          </div>
+                        )
                       )}
                     </div>
                     
@@ -463,7 +447,7 @@ function AdminProducts() {
                 onClick={() => {
                   setShowDuplicateModal(false);
                   setDuplicateProduct(null);
-                  setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
+                  setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '', pricePerEgg: '' });
                 }}
                 className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-xl hover:bg-yellow-700 transition font-semibold"
                 style={{ fontFamily: 'Inter, sans-serif' }}

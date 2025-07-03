@@ -17,7 +17,7 @@ function AdminDashboard() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemWeight, setItemWeight] = useState(500);
-  const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', email: '' });
+  const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', email: '', qty: 1 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -137,10 +137,17 @@ function AdminDashboard() {
               const productSnap = await getDoc(productRef);
               if (productSnap.exists()) {
                 const currentQty = productSnap.data().quantity || 0;
-        const boughtKg = (itemWeight || 0) / 1000;
-                let newQty = currentQty - boughtKg;
-                if (newQty < 0) newQty = 0;
-                await updateDoc(productRef, { quantity: newQty });
+        let newQty;
+        if (item.category === 'eggs') {
+          // Deduct eggs as integer pieces
+          newQty = currentQty - (item.quantity || 1);
+        } else {
+          // Existing logic for meat (by weight)
+          const boughtKg = (itemWeight || 0) / 1000;
+          newQty = currentQty - boughtKg;
+        }
+        if (newQty < 0) newQty = 0;
+        await updateDoc(productRef, { quantity: Math.round(newQty) });
             }
 
             // Add transaction record
@@ -172,7 +179,7 @@ function AdminDashboard() {
       // Reset form
       setShowCustomerForm(false);
       setSelectedItem(null);
-      setCustomerInfo({ name: '', phone: '', email: '' });
+      setCustomerInfo({ name: '', phone: '', email: '', qty: 1 });
       
       // Refresh data
       await fetchOrders();
@@ -296,28 +303,42 @@ function AdminDashboard() {
                     </h3>
                     
                     <div className="space-y-3 mb-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-slate-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          ₹{item.price}
-                        </span>
-                        <span className="text-sm text-slate-500 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
-                          per kg
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
-                          📦 Available:
-                        </span>
-                        <span className={`text-sm font-bold ${
-                          (item.quantity || 0) > 10 ? 'text-green-600' : 
-                          (item.quantity || 0) > 0 ? 'text-yellow-600' : 
-                          'text-red-600'
-                        }`} 
-                        style={{ fontFamily: 'Inter, sans-serif' }}>
-                          {item.quantity || 0} kg
-                        </span>
-                      </div>
+                      {item.category === 'eggs' ? (
+                        <>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-base font-semibold text-slate-700">6 eggs: <span className="text-red-600 font-bold">₹{item.price6}</span></span>
+                            <span className="text-base font-semibold text-slate-700">12 eggs: <span className="text-red-600 font-bold">₹{item.price12}</span></span>
+                            <span className="text-base font-semibold text-slate-700">30 eggs: <span className="text-red-600 font-bold">₹{item.price30}</span></span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600 font-medium">🥚 Available:</span>
+                            <span className={`text-sm font-bold ${
+                              (item.quantity || 0) > 10 ? 'text-green-600' : 
+                              (item.quantity || 0) > 0 ? 'text-yellow-600' : 
+                              'text-red-600'
+                            }`}>
+                              {item.quantity || 0} eggs
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold text-slate-700">₹{item.price}</span>
+                            <span className="text-sm text-slate-500 font-medium">per kg</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600 font-medium">📦 Available:</span>
+                            <span className={`text-sm font-bold ${
+                              (item.quantity || 0) > 10 ? 'text-green-600' : 
+                              (item.quantity || 0) > 0 ? 'text-yellow-600' : 
+                              'text-red-600'
+                            }`}>
+                              {item.quantity || 0} kg
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     <button 
@@ -345,40 +366,57 @@ function AdminDashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
             <h3 className="responsive-text-xl font-bold mb-4 text-slate-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Create Order - {selectedItem.name}
+              Create Order - {selectedItem.name}
             </h3>
-            
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Weight (g)
-                </label>
-                <div className="flex items-center">
-                  <input
-                    type="number"
-                    value={itemWeight}
-                    onChange={(e) => handleWeightChange(selectedItem.id, e.target.value)}
-                    className="flex-1 responsive-btn border-2 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200"
-                    placeholder="500"
-                    min="100"
-                    step="100"
-                  />
-                  <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    g
-                  </span>
+              {selectedItem.category === 'eggs' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">How many eggs (pieces)?</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={selectedItem.quantity}
+                      value={itemWeight}
+                      onChange={e => setItemWeight(Number(e.target.value))}
+                      className="w-24 p-2 border border-slate-300 rounded-lg text-sm"
+                    />
+                    <p className="text-sm text-slate-500 mt-1">
+                      Price: ₹{(selectedItem.pricePerEgg || 0) * (itemWeight || 1)}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    Weight (g)
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      value={itemWeight}
+                      onChange={(e) => handleWeightChange(selectedItem.id, e.target.value)}
+                      className="flex-1 responsive-btn border-2 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200"
+                      placeholder="500"
+                      min="100"
+                      step="100"
+                    />
+                    <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-200 rounded-r-xl text-slate-600" style={{ fontFamily: 'Inter, sans-serif' }}>
+                      g
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    Price: ₹{calculatePrice(selectedItem, itemWeight)}
+                  </p>
                 </div>
-                <p className="text-sm text-slate-500 mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Price: ₹{calculatePrice(selectedItem, itemWeight)}
-                </p>
-              </div>
+              )}
             </div>
-            
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
                   setShowCustomerForm(false);
                   setSelectedItem(null);
-                  setCustomerInfo({ name: '', phone: '', email: '' });
+                  setCustomerInfo({ name: '', phone: '', email: '', qty: 1 });
                 }}
                 className="flex-1 responsive-btn bg-slate-500 text-white hover:bg-slate-600 transition rounded-xl"
                 style={{ fontFamily: 'Inter, sans-serif' }}
@@ -386,11 +424,24 @@ function AdminDashboard() {
                 Cancel
               </button>
               <button
-                onClick={() => handleConfirmAddToCart(selectedItem)}
-                  className="flex-1 responsive-btn bg-green-600 text-white hover:bg-green-700 transition rounded-xl"
+                onClick={async () => {
+                  if (selectedItem.category === 'eggs') {
+                    const qty = itemWeight || 1;
+                    const price = (selectedItem.pricePerEgg || 0) * qty;
+                    await handleConfirmAddToCart({
+                      ...selectedItem,
+                      quantity: qty,
+                      price,
+                      customerInfo: { name: 'Walk-in Customer', phone: 'N/A', email: '' }
+                    });
+                  } else {
+                    await handleConfirmAddToCart(selectedItem);
+                  }
+                }}
+                className="flex-1 responsive-btn bg-green-600 text-white hover:bg-green-700 transition rounded-xl"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                  🖨 Create Order & Print
+                🖨 Create Order & Print
               </button>
             </div>
           </div>

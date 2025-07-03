@@ -63,7 +63,7 @@ function Orders() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-200 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       default:
@@ -84,7 +84,7 @@ function Orders() {
 
   if (loading) {
     return (
-      <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content">
+      <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content bg-green-100 min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p>Loading your orders...</p>
@@ -94,10 +94,10 @@ function Orders() {
   }
 
   return (
-    <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content">
+    <div className="responsive-container responsive-p-4 sm:responsive-p-8 main-content bg-green-100 min-h-screen">
       {/* New Order Notification */}
       {showNewOrderNotification && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg animate-pulse">
+        <div className="mb-4 p-4 bg-green-200 border border-green-300 rounded-lg animate-pulse">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,13 +124,13 @@ function Orders() {
 
       {orders.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-600 mb-2">No Orders Yet</h2>
-          <p className="text-gray-500 mb-4">Start shopping to see your orders here</p>
+          <h2 className="text-xl font-semibold text-green-800 mb-2">No Orders Yet</h2>
+          <p className="text-green-600 mb-4">Start shopping to see your orders here</p>
           <Link 
             to="/" 
             className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
@@ -145,7 +145,7 @@ function Orders() {
             const isExpanded = expandedOrder === order.id;
             
             return (
-              <div key={order.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div key={order.id} className="bg-yellow-100 rounded-lg shadow-lg overflow-hidden">
                 {/* Order Header */}
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -207,7 +207,7 @@ function Orders() {
 
                 {/* Expanded Order Details */}
                 {isExpanded && (
-                  <div className="p-6 bg-gray-50">
+                  <div className="p-6 bg-green-50">
                     {/* Order Items */}
                     <div className="mb-6">
                       <h4 className="font-semibold text-gray-800 mb-3">Order Items</h4>
@@ -259,7 +259,7 @@ function Orders() {
                           📄 Download E-Bill
                         </a>
                       ) : (
-                        <div className="flex-1 bg-gray-100 text-gray-600 text-center px-4 py-2 rounded-lg">
+                        <div className="flex-1 bg-yellow-100 text-yellow-800 text-center px-4 py-2 rounded-lg">
                           📄 E-Bill Generating...
                         </div>
                       )}

@@ -73,7 +73,9 @@ function AdminDashboard() {
   const groupedItems = {
     chicken: products.filter(item => item.category === 'chicken'),
     mutton: products.filter(item => item.category === 'mutton'),
-    goat: products.filter(item => item.category === 'goat')
+    goat: products.filter(item => item.category === 'goat'),
+    eggs: products.filter(item => item.category === 'eggs'),
+    masalas: products.filter(item => item.category === 'masalas')
   };
   
   const getFilteredItems = () => {
@@ -238,7 +240,7 @@ function AdminDashboard() {
             </h2>
             
             <div className="flex flex-wrap gap-3 mb-6">
-              {['all', 'chicken', 'mutton', 'goat'].map(cat => (
+              {['all', 'chicken', 'mutton', 'goat', 'eggs', 'masalas'].map(cat => (
                 <button 
                   key={cat} 
                   className={`responsive-btn rounded-full transition-all duration-300 shadow-lg touch-target font-semibold ${

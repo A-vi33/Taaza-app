@@ -19,6 +19,10 @@ import Toast from "../../Toast";
 function PaymentModal({ isOpen, onClose, employee, onConfirm }) {
   const [amount, setAmount] = useState("");
 
+  useEffect(() => {
+    if (!isOpen) setAmount("");
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -74,6 +78,7 @@ function AdminEmployees() {
     phone: "",
     salary: "",
     joinDate: "",
+    position: "",
     leaveBalance: 20
   });
   const [leaveForm, setLeaveForm] = useState({
@@ -178,6 +183,7 @@ function AdminEmployees() {
         phone: employeeForm.phone,
         salary: Number(employeeForm.salary),
         joinDate: employeeForm.joinDate,
+        position: employeeForm.position,
         leaveBalance: Number(employeeForm.leaveBalance),
         updatedAt: serverTimestamp()
       };
@@ -196,6 +202,7 @@ function AdminEmployees() {
         phone: "",
         salary: "",
         joinDate: "",
+        position: "",
         leaveBalance: 20
       });
       setEditingEmployeeId(null);
@@ -300,6 +307,7 @@ function AdminEmployees() {
       phone: employee.phone || "",
       salary: employee.salary || "",
       joinDate: employee.joinDate || "",
+      position: employee.position || "",
       leaveBalance: employee.leaveBalance || 20
     });
     setEditingEmployeeId(employee.id);
@@ -492,6 +500,14 @@ function AdminEmployees() {
                     className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
                     required
                   />
+                  <input
+                    name="position"
+                    value={employeeForm.position}
+                    onChange={handleEmployeeFormChange}
+                    placeholder="Position"
+                    className="responsive-btn border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+                    required
+                  />
                 </div>
                 
                 <div className="flex gap-2">
@@ -511,6 +527,7 @@ function AdminEmployees() {
                           phone: "",
                           salary: "",
                           joinDate: "",
+                          position: "",
                           leaveBalance: 20
                         });
                         setEditingEmployeeId(null);

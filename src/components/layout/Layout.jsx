@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Header from '../header/Header'
 import Footer from '../footer/Footer'
 import Routers from '../routers/Routers'
@@ -6,6 +6,11 @@ import { BrowserRouter as Router, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 function Layout() {
+  // Scroll to top on reload/mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   function HideHeaderFooterWrapper({ children }) {
     const location = useLocation();
     const { loading } = useAuth();

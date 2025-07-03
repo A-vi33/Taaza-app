@@ -266,6 +266,13 @@ const GoatIcon = (props) => (
   </svg>
 );
 
+const EggIcon = (props) => (
+  <span role="img" aria-label="Eggs" {...props}>🥚</span>
+);
+const MasalaIcon = (props) => (
+  <span role="img" aria-label="Masalas" {...props}>🧂</span>
+);
+
 // ▼▼▼ PRODUCT CARD HAS BEEN SIGNIFICANTLY MODIFIED FOR RESPONSIVE SIZE ▼▼▼
 function ProductCard({ item, onAddToCart }) {
   const [weight, setWeight] = useState('');
@@ -297,7 +304,7 @@ function ProductCard({ item, onAddToCart }) {
     setShowWeightInput(false);
   };
   return (
-    <article className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-slate-200/50 h-full">
+    <article className="bg-yellow-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-yellow-200/50 h-full">
       <img
         src={item.imageUrl || 'https://via.placeholder.com/400x300'}
         alt={item.name}
@@ -310,7 +317,7 @@ function ProductCard({ item, onAddToCart }) {
         <p className="text-lg sm:text-2xl font-extrabold text-red-600 mt-2 sm:mt-4"> {/* Responsive text and margin */}
           ₹{item.price}<span className="text-xs sm:text-sm font-medium text-slate-500">/kg</span>
         </p>
-        <div className="mt-2 sm:mt-4"> {/* Responsive margin */}
+        <div className="mt-2 sm:mt-4">
           {!showWeightInput ? (
             <div className="flex gap-2">
               <button onClick={handleShowInput} className="flex-1 bg-green-500 text-white font-bold py-2 px-3 text-sm sm:py-3 sm:px-4 rounded-lg hover:bg-green-600 transition-colors duration-300">
@@ -321,11 +328,7 @@ function ProductCard({ item, onAddToCart }) {
               </Link>
             </div>
           ) : (
-            <div className="space-y-2 p-2 bg-slate-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <label htmlFor={`weight-${item.id}`} className="font-semibold text-slate-600 text-xs sm:text-sm">Weight (g)</label>
-                <span className="font-bold text-base sm:text-lg text-red-600">₹{calculatedPrice}</span>
-              </div>
+            <div className="flex gap-2 items-center">
               <input
                 id={`weight-${item.id}`}
                 type="text"
@@ -335,13 +338,13 @@ function ProductCard({ item, onAddToCart }) {
                 value={weight}
                 onChange={handleWeightChange}
                 placeholder="Grams"
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                className="flex-1 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                style={{ minWidth: 0 }}
               />
-              <div className="flex items-center gap-2">
-                <button onClick={handleConfirm} className="flex-1 bg-green-600 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-700">
-                  Confirm
-                </button>
-              </div>
+              <span className="font-bold text-base sm:text-lg text-red-600 whitespace-nowrap">₹{calculatedPrice}</span>
+              <button onClick={handleConfirm} className="bg-green-600 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-700 transition-colors flex-shrink-0">
+                Confirm
+              </button>
             </div>
           )}
         </div>
@@ -366,6 +369,8 @@ function Home(props) {
     { key: 'chicken', label: 'Chicken', icon: ChickenIcon },
     { key: 'mutton', label: 'Mutton', icon: MuttonIcon },
     { key: 'goat', label: 'Goat', icon: GoatIcon },
+    { key: 'eggs', label: 'Eggs', icon: EggIcon },
+    { key: 'masalas', label: 'Masalas', icon: MasalaIcon },
   ];
 
   useEffect(() => {
@@ -420,10 +425,9 @@ function Home(props) {
   if (error) return <div className="flex justify-center items-center h-screen bg-red-50 text-red-600 text-xl">{error}</div>;
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-green-100">
       <div
-        className={`fixed top-5 right-5 bg-green-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-500 ease-in-out
-                    ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
+        className={`fixed top-5 right-5 bg-green-200 text-green-800 border border-green-400 font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-500 ease-in-out ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
       >
         ✅ {successMessage}
       </div>
@@ -455,7 +459,7 @@ function Home(props) {
                 className={`filter-button inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold transition-all duration-300 border-2 text-sm ${
                   activeFilter === filter.key
                     ? 'active bg-red-600 text-white border-red-600 shadow-md'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-red-50 hover:border-red-400'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-yellow-100 hover:border-yellow-400'
                 }`}
                 onClick={() => setActiveFilter(filter.key)}
               >

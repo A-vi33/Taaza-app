@@ -10,7 +10,7 @@ const adminLinks = [
   { to: '/admin/products', label: 'Products', icon: <FaDrumstickBite /> },
   { to: '/admin/employees', label: 'Employees', icon: <FaUsersCog /> },
   { to: '/admin/orders', label: 'Orders', icon: <FaClipboardList /> },
-  { to: '/admin/delivery', label: 'Delivery', icon: <FaTruck /> },
+  // { to: '/admin/delivery', label: 'Delivery', icon: <FaTruck /> }, // REMOVED/COMMENTED OUT
   { to: '/admin/analytics', label: 'Analytics', icon: <FaChartBar /> },
   { to: '/admin/settings', label: 'Settings', icon: <FaCog /> },
 ];

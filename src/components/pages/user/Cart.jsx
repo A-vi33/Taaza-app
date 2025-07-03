@@ -306,17 +306,17 @@ function Cart(props) {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-green-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-8 text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <span className="text-3xl">🛒</span>
+          <div className="bg-yellow-100 rounded-2xl shadow-xl border border-yellow-200/50 p-8 text-center">
+            <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <span className="text-3xl text-white">🛒</span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-4">Your Cart is Empty</h1>
-            <p className="text-slate-600 text-lg mb-8">Looks like you haven't added any items yet.</p>
+            <h1 className="text-3xl font-bold text-green-800 mb-4">Your Cart is Empty</h1>
+            <p className="text-green-600 text-lg mb-8">Looks like you haven't added any items yet.</p>
             <Link 
               to="/" 
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-semibold rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               🍗 Start Shopping
             </Link>
@@ -333,42 +333,38 @@ function Cart(props) {
         
         <div className="space-y-4 mb-6">
           {cartItems.map(item => (
-            <div key={item.id + '-' + item.weight} className="bg-gray-800 p-4 rounded-lg flex flex-row items-center gap-4 shadow-md">
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.name} 
-                    className="w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
-                  />
-                <div className="flex-1 min-w-0">
-                <h3 className="responsive-text-lg font-bold text-white mb-2">{item.name}</h3>
-                <p className="responsive-text-sm text-gray-300 mb-2">{item.weight}g</p>
-                <p className="responsive-text-base text-gray-200 mb-3">
-                  ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-400">₹{item.price * item.quantity}</span>
+            <div key={item.id + '-' + item.weight} className="bg-yellow-100 p-4 rounded-lg flex flex-row items-center gap-4 shadow-md border border-yellow-200/50">
+              <img 
+                src={item.imageUrl} 
+                alt={item.name} 
+                className="w-20 h-20 object-cover rounded shadow-sm flex-shrink-0" 
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="responsive-text-lg font-bold text-gray-800 mb-2">{item.name}</h3>
+                <p className="responsive-text-sm text-yellow-800 mb-2">{item.weight}g</p>
+                <p className="responsive-text-base text-gray-700 mb-3">
+                  ₹{item.price} x {item.quantity} = <span className="font-semibold text-green-600">₹{item.price * item.quantity}</span>
                 </p>
-
                 <div className="flex flex-wrap items-center gap-2">
-                      <button 
-                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-900 transition touch-target disabled:opacity-50"
-                        onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)} 
-                        disabled={item.quantity <= 1}
-                      >
+                  <button 
+                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-800 transition touch-target disabled:opacity-50"
+                    onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)} 
+                    disabled={item.quantity <= 1}
+                  >
                     -
-                      </button>
-
-                  <span className="responsive-text-base font-medium text-white mx-2 min-w-[2rem] text-center">{item.quantity}</span>
-                  
-                      <button 
-                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-900 transition touch-target" 
-                        onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                      >
+                  </button>
+                  <span className="responsive-text-base font-medium text-gray-800 mx-2 min-w-[2rem] text-center">{item.quantity}</span>
+                  <button 
+                    className="w-7 h-7 flex items-center justify-center text-lg font-bold bg-black text-white rounded-md hover:bg-gray-800 transition touch-target" 
+                    onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                  >
                     +
-                      </button>
-                    
-                      <button 
+                  </button>
+                  <button 
                     className="w-8 h-8 flex items-center justify-center text-white bg-red-600 rounded-full hover:bg-red-700 transition ml-auto touch-target" 
-                        onClick={() => removeItem(item.id, item.weight)}
-                        aria-label="Remove item"
-                      >
+                    onClick={() => removeItem(item.id, item.weight)}
+                    aria-label="Remove item"
+                  >
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -377,9 +373,9 @@ function Cart(props) {
           ))}
         </div>
         
-        <div className="responsive-card responsive-p-4 bg-gray-50 rounded-lg mb-6">
+        <div className="responsive-card responsive-p-4 bg-white rounded-lg mb-6">
           <div className="flex justify-between items-center">
-            <span className="responsive-text-xl font-bold">Total:</span>
+            <span className="responsive-text-xl font-bold text-green-800">Total:</span>
             <span className="responsive-text-xl font-bold text-green-600">₹{total}</span>
           </div>
         </div>

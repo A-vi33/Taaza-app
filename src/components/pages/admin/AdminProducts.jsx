@@ -11,7 +11,7 @@ function AdminProducts() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: '', category: '', price: '', image: null, quantity: '' });
+  const [form, setForm] = useState({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState(null);
   const [editingPriceId, setEditingPriceId] = useState(null);
@@ -59,9 +59,16 @@ function AdminProducts() {
     e.preventDefault();
     
     // 1. Validate all fields are filled
-    if (!form.name || !form.category || !form.price || !form.quantity || (!form.image && !editingId)) {
-      showToast("Please fill out all product details, including the image.", "error");
-      return;
+    if (form.category === 'eggs') {
+      if (!form.name || !form.category || !form.price6 || !form.price12 || !form.price30 || !form.quantity || (!form.image && !editingId)) {
+        showToast("Please fill out all product details, including the image.", "error");
+        return;
+      }
+    } else {
+      if (!form.name || !form.category || !form.price || !form.quantity || (!form.image && !editingId)) {
+        showToast("Please fill out all product details, including the image.", "error");
+        return;
+      }
     }
 
     // 2. Check for duplicate product name (only when adding a new product)
@@ -84,6 +91,11 @@ function AdminProducts() {
         price: Number(form.price),
         quantity: Number(form.quantity),
         imageUrl: imageUrl, // Directly use the image URL or base64 data
+        ...(form.category === 'eggs' && {
+          price6: Number(form.price6),
+          price12: Number(form.price12),
+          price30: Number(form.price30),
+        })
       };
 
       if (editingId) {
@@ -94,7 +106,7 @@ function AdminProducts() {
         showToast("Product added successfully", "success");
       }
 
-      setForm({ name: '', category: '', price: '', image: null, quantity: '' });
+      setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
       setEditingId(null);
     } catch (err) {
       showToast("Failed to save product. Please try again.", "error");
@@ -103,7 +115,16 @@ function AdminProducts() {
   };
 
   const handleEdit = p => {
-    setForm({ name: p.name, category: p.category, price: p.price, image: p.imageUrl, quantity: p.quantity });
+    setForm({
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      image: p.imageUrl,
+      quantity: p.quantity,
+      price6: p.price6 || '',
+      price12: p.price12 || '',
+      price30: p.price30 || '',
+    });
     setEditingId(p.id);
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top to see the form
   };
@@ -197,28 +218,78 @@ function AdminProducts() {
               <option value="chicken">Chicken</option>
               <option value="mutton">Mutton</option>
               <option value="goat">Goat</option>
+              <option value="eggs">Eggs</option>
+              <option value="masalas">Masalas</option>
             </select>
-            <input 
-              name="price" 
-              value={form.price} 
-              onChange={handleChange} 
-              placeholder="Price (₹/kg)" 
-              type="number" 
-              className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
-              style={{ fontFamily: 'Inter, sans-serif' }}
-              required 
-            />
-            <input 
-              name="quantity" 
-              value={form.quantity} 
-              onChange={handleChange} 
-              placeholder="Stock (kg)" 
-              type="number" 
-              min="0" 
-              className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
-              style={{ fontFamily: 'Inter, sans-serif' }}
-              required 
-            />
+            {form.category === 'eggs' ? (
+              <>
+                <input
+                  name="price6"
+                  value={form.price6}
+                  onChange={handleChange}
+                  placeholder="Price (₹) for 6 Eggs"
+                  type="number"
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                />
+                <input
+                  name="price12"
+                  value={form.price12}
+                  onChange={handleChange}
+                  placeholder="Price (₹) for 12 Eggs"
+                  type="number"
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                />
+                <input
+                  name="price30"
+                  value={form.price30}
+                  onChange={handleChange}
+                  placeholder="Price (₹) for 30 Eggs"
+                  type="number"
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                />
+                <input
+                  name="quantity"
+                  value={form.quantity}
+                  onChange={handleChange}
+                  placeholder="Total Eggs in Stock"
+                  type="number"
+                  min="0"
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                />
+              </>
+            ) : (
+              <>
+                <input 
+                  name="price" 
+                  value={form.price} 
+                  onChange={handleChange} 
+                  placeholder="Price (₹/kg)" 
+                  type="number" 
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required 
+                />
+                <input 
+                  name="quantity" 
+                  value={form.quantity} 
+                  onChange={handleChange} 
+                  placeholder="Stock (kg)" 
+                  type="number" 
+                  min="0" 
+                  className="p-3 border-2 border-slate-200 rounded-xl w-full focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-200 bg-white/90 text-slate-900 font-medium shadow-sm" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required 
+                />
+              </>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <input 
@@ -245,7 +316,7 @@ function AdminProducts() {
               <button 
                 type="button" 
                 className="px-6 py-3 text-slate-600 hover:text-slate-800 border border-slate-300 rounded-xl hover:bg-slate-50 transition shadow-sm" 
-                onClick={() => { setForm({ name: '', category: '', price: '', image: null, quantity: '' }); setEditingId(null); }}
+                onClick={() => { setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' }); setEditingId(null); }}
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 Cancel
@@ -281,9 +352,22 @@ function AdminProducts() {
                       <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                         Category: <span className="font-medium text-slate-700">{product.category}</span>
                       </p>
-                      <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Stock: <span className="font-medium text-slate-700">{product.quantity} kg</span>
-                      </p>
+                      {product.category === 'eggs' ? (
+                        <>
+                          <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            Price: <span className="font-medium text-slate-700">₹{product.price6} (6 eggs), ₹{product.price12} (12 eggs), ₹{product.price30} (30 eggs)</span>
+                          </p>
+                          <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            Stock: <span className="font-medium text-slate-700">{product.quantity} eggs</span>
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-slate-600 responsive-text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                            Stock: <span className="font-medium text-slate-700">{product.quantity} kg</span>
+                          </p>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex-grow" />
@@ -379,7 +463,7 @@ function AdminProducts() {
                 onClick={() => {
                   setShowDuplicateModal(false);
                   setDuplicateProduct(null);
-                  setForm({ name: '', category: '', price: '', image: null, quantity: '' });
+                  setForm({ name: '', category: '', price: '', image: null, quantity: '', price6: '', price12: '', price30: '' });
                 }}
                 className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-xl hover:bg-yellow-700 transition font-semibold"
                 style={{ fontFamily: 'Inter, sans-serif' }}
